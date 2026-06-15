@@ -285,7 +285,7 @@ export default function MainPage() {
             transition={{ duration: 1.2 }}
             className="font-playfair text-5xl sm:text-7xl font-bold tracking-wide text-gold-gradient my-2 leading-tight"
           >
-            Ayo & Amara
+            Ayodeji & Adesewa
           </motion.h1>
 
           <motion.div 
@@ -382,7 +382,7 @@ export default function MainPage() {
             </div>
             <h3 className="font-playfair text-xl text-wedding-beige font-semibold">The Promise</h3>
             <p className="text-sm text-wedding-beige/80 mt-1">
-              Under a canopy of stars on an evening beach getaway, Ayo knelt down and asked Amara to spend forever with him. It was an easy, tearful "Yes!".
+              Under a canopy of stars on an evening beach getaway, Ayodeji knelt down and asked Adesewa to spend forever with him. It was an easy, tearful "Yes!".
             </p>
           </div>
 
@@ -807,7 +807,7 @@ export default function MainPage() {
       {/* Decorative footer */}
       <footer className="py-12 border-t border-wedding-gold/10 text-center bg-wedding-darkCard/40">
         <h2 className="font-playfair text-xl text-gold-gradient tracking-widest">AALOVESTORY2026</h2>
-        <p className="text-xs text-wedding-beige/60 font-poppins mt-2 tracking-wider">Ayo & Amara — Forever & Always</p>
+        <p className="text-xs text-wedding-beige/60 font-poppins mt-2 tracking-wider">Ayodeji & Adesewa — Forever & Always</p>
         <p className="text-[9px] text-wedding-gold/30 font-poppins tracking-[0.2em] mt-8 uppercase">© 2026 AALOVESTORY. All Rights Reserved.</p>
       </footer>
     </div>

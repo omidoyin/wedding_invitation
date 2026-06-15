@@ -178,7 +178,7 @@ export default function EnvelopePage() {
 
       {/* Decorative footer */}
       <p className="text-[11px] text-wedding-gold/40 font-poppins tracking-[0.2em] mt-12 z-10 text-center">
-        DESIGNED FOR THE WEDDING OF AYO & AMARA
+        DESIGNED FOR THE WEDDING OF AYODEJI & ADESEWA
       </p>
     </div>
   );
