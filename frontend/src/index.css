@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #0F0F10;
+    color: #F5F5DC;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0F0F10;
+}
+::-webkit-scrollbar-thumb {
+  background: #722F37;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #D4AF37;
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: rgba(26, 26, 30, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.glass-panel-heavy {
+  background: rgba(15, 15, 16, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+/* Golden text gradient */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #F3E5AB 0%, #D4AF37 50%, #AA7C11 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Wine text gradient */
+.text-wine-gradient {
+  background: linear-gradient(135deg, #8C3D46 0%, #722F37 50%, #4A1D23 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom envelope shadows and styling */
+.envelope-shadow {
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8),
+              0 0 50px rgba(114, 47, 55, 0.2);
+}
+
+/* Sparkle particles */
+.sparkle-particle {
+  position: absolute;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(214,175,55,1) 0%, rgba(214,175,55,0) 70%);
+  border-radius: 50%;
+  animation: floatUp 8s ease-in-out infinite;
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(100vh) translateX(0) scale(0.2);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-10vh) translateX(100px) scale(1);
+    opacity: 0;
+  }
+}
