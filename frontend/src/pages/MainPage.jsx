@@ -261,8 +261,8 @@ export default function MainPage() {
       
       {/* 1. HERO SECTION */}
       <section className="relative min-h-screen flex flex-col items-center justify-center text-center p-6 border-b border-wedding-gold/10 overflow-hidden">
-        {/* Luxury Background Overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-wedding-wine/25 via-wedding-darkBg to-wedding-darkBg z-0"></div>
+        {/* Luxury Dark Background Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#3D1B1E] via-[#240A0C] to-[#120002] z-0"></div>
         
         {/* Sparkle background elements */}
         <div className="absolute top-[20%] left-[10%] w-3 h-3 bg-wedding-gold rounded-full blur-[2px] animate-pulse duration-1000 opacity-60"></div>
@@ -303,9 +303,9 @@ export default function MainPage() {
             className="grid grid-cols-4 gap-3 sm:gap-6 my-6 max-w-lg"
           >
             {Object.entries(timeLeft).map(([label, value]) => (
-              <div key={label} className="glass-panel px-3 py-4 sm:px-6 sm:py-5 rounded-2xl border border-wedding-gold/20 flex flex-col items-center justify-center min-w-[70px] sm:min-w-[90px]">
+              <div key={label} className="bg-white/10 backdrop-blur-md px-3 py-4 sm:px-6 sm:py-5 rounded-2xl border border-wedding-gold/30 flex flex-col items-center justify-center min-w-[70px] sm:min-w-[90px]">
                 <span className="text-2xl sm:text-4xl font-playfair font-bold text-wedding-gold">{String(value).padStart(2, '0')}</span>
-                <span className="text-[10px] sm:text-xs text-wedding-beige/60 uppercase tracking-widest mt-1">{label}</span>
+                <span className="text-[10px] sm:text-xs text-[#FAF8F5]/80 uppercase tracking-widest mt-1">{label}</span>
               </div>
             ))}
           </motion.div>
@@ -314,7 +314,7 @@ export default function MainPage() {
             initial={{ opacity: 0 }} 
             animate={{ opacity: 0.9 }} 
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="text-wedding-beige/80 text-sm sm:text-base tracking-[0.2em] font-playfair uppercase mt-2 mb-8"
+            className="text-[#FAF8F5]/90 text-sm sm:text-base tracking-[0.2em] font-playfair uppercase mt-2 mb-8"
           >
             October 10, 2026 | Lagos, Nigeria
           </motion.p>
@@ -326,13 +326,13 @@ export default function MainPage() {
             transition={{ delay: 0.8, duration: 0.8 }}
             className="flex flex-wrap justify-center gap-4 mt-2"
           >
-            <a href="#rsvp" className="px-8 py-3 bg-wedding-wine text-wedding-beige hover:bg-wedding-wineDark transition-all duration-300 font-playfair text-sm tracking-wider rounded-xl shadow-lg border border-wedding-gold/30 hover:border-wedding-gold">
+            <a href="#rsvp" className="px-8 py-3 bg-wedding-gold text-wedding-wineDark hover:bg-wedding-goldLight hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] transition-all duration-300 font-playfair font-bold text-sm tracking-wider rounded-xl shadow-lg border border-wedding-gold/30">
               RSVP NOW
             </a>
-            <a href="#gallery" className="px-8 py-3 glass-panel text-wedding-beige hover:bg-wedding-wine/30 transition-all duration-300 font-playfair text-sm tracking-wider rounded-xl shadow-md border border-wedding-gold/20">
+            <a href="#gallery" className="px-8 py-3 bg-white/10 backdrop-blur-md text-wedding-lightBeige hover:bg-white/20 transition-all duration-300 font-playfair text-sm tracking-wider rounded-xl shadow-md border border-wedding-gold/30">
               UPLOAD PHOTOS
             </a>
-            <a href="#support" className="px-8 py-3 bg-[#133015] hover:bg-wedding-emeraldDark text-wedding-beige transition-all duration-300 font-playfair text-sm tracking-wider rounded-xl shadow-md border border-wedding-emerald/40 hover:border-wedding-gold">
+            <a href="#support" className="px-8 py-3 bg-wedding-emerald hover:bg-wedding-emeraldLight text-white transition-all duration-300 font-playfair text-sm tracking-wider rounded-xl shadow-md border border-wedding-emerald/40 hover:border-wedding-gold">
               SUPPORT WEDDING
             </a>
           </motion.div>
@@ -343,21 +343,21 @@ export default function MainPage() {
       <section className="py-20 px-6 max-w-4xl mx-auto border-b border-wedding-gold/10">
         <div className="text-center mb-16">
           <Heart className="w-10 h-10 text-wedding-wine mx-auto mb-3 animate-pulse" />
-          <h2 className="font-playfair text-3xl sm:text-4xl text-wedding-gold tracking-wider">Our Love Story</h2>
-          <p className="italic text-wedding-beige/60 text-sm mt-1">“We met in university and became friends.”</p>
+          <h2 className="font-playfair text-3xl sm:text-4xl text-wedding-wine tracking-wider font-bold">Our Love Story</h2>
+          <p className="italic text-wedding-wineDark/80 text-sm mt-1">“We met in university and became friends.”</p>
           <div className="w-16 h-[1px] bg-wedding-gold/40 mx-auto mt-4"></div>
         </div>
 
         {/* Timeline UI */}
-        <div className="relative border-l border-wedding-gold/20 ml-4 md:ml-32 pr-4 space-y-12">
+        <div className="relative border-l border-wedding-wine/30 ml-4 md:ml-32 pr-4 space-y-12">
           {/* Timeline Node 1 */}
           <div className="relative pl-8">
             <span className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-wedding-wine border border-wedding-gold"></span>
             <div className="absolute -left-28 top-0 hidden md:block w-24 text-right pr-4">
-              <span className="font-playfair text-wedding-gold text-lg font-bold">2020</span>
+              <span className="font-playfair text-wedding-wineDark text-xl font-extrabold">2020</span>
             </div>
-            <h3 className="font-playfair text-xl text-wedding-beige font-semibold">The First Encounter</h3>
-            <p className="text-sm text-wedding-beige/80 mt-1">
+            <h3 className="font-playfair text-xl text-wedding-wineDark font-bold">The First Encounter</h3>
+            <p className="text-sm text-wedding-wineDark/95 mt-1 leading-relaxed">
               We met on the university campus library steps. What started as sharing lecture notes quickly blossomed into endless chats, late-night campus coffee runs, and a deep, unbreakable friendship.
             </p>
           </div>
@@ -366,10 +366,10 @@ export default function MainPage() {
           <div className="relative pl-8">
             <span className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-wedding-emerald border border-wedding-gold"></span>
             <div className="absolute -left-28 top-0 hidden md:block w-24 text-right pr-4">
-              <span className="font-playfair text-wedding-gold text-lg font-bold">2022</span>
+              <span className="font-playfair text-wedding-wineDark text-xl font-extrabold">2022</span>
             </div>
-            <h3 className="font-playfair text-xl text-wedding-beige font-semibold">More Than Friends</h3>
-            <p className="text-sm text-wedding-beige/80 mt-1">
+            <h3 className="font-playfair text-xl text-wedding-wineDark font-bold">More Than Friends</h3>
+            <p className="text-sm text-wedding-wineDark/95 mt-1 leading-relaxed">
               After two years of supporting each other's dreams, sharing goals, and walking side by side as best friends, we realized that our hearts were irrevocably bound together. Friendship matured into a beautiful romance.
             </p>
           </div>
@@ -378,10 +378,10 @@ export default function MainPage() {
           <div className="relative pl-8">
             <span className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-wedding-wine border border-wedding-gold"></span>
             <div className="absolute -left-28 top-0 hidden md:block w-24 text-right pr-4">
-              <span className="font-playfair text-wedding-gold text-lg font-bold">2024</span>
+              <span className="font-playfair text-wedding-wineDark text-xl font-extrabold">2024</span>
             </div>
-            <h3 className="font-playfair text-xl text-wedding-beige font-semibold">The Promise</h3>
-            <p className="text-sm text-wedding-beige/80 mt-1">
+            <h3 className="font-playfair text-xl text-wedding-wineDark font-bold">The Promise</h3>
+            <p className="text-sm text-wedding-wineDark/95 mt-1 leading-relaxed">
               Under a canopy of stars on an evening beach getaway, Ayodeji knelt down and asked Adesewa to spend forever with him. It was an easy, tearful "Yes!".
             </p>
           </div>
@@ -390,10 +390,10 @@ export default function MainPage() {
           <div className="relative pl-8">
             <span className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-wedding-gold border border-wedding-wine"></span>
             <div className="absolute -left-28 top-0 hidden md:block w-24 text-right pr-4">
-              <span className="font-playfair text-wedding-gold text-lg font-bold">2026</span>
+              <span className="font-playfair text-wedding-wineDark text-xl font-extrabold">2026</span>
             </div>
-            <h3 className="font-playfair text-xl text-wedding-gold font-semibold">The Forever</h3>
-            <p className="text-sm text-wedding-beige/90 mt-1 font-medium">
+            <h3 className="font-playfair text-xl text-wedding-wineDark font-bold">The Forever</h3>
+            <p className="text-sm text-wedding-wine font-semibold mt-1 leading-relaxed">
               And now, we are counting down the days to say our vows and walk down the aisle into forever in front of our beloved families and friends.
             </p>
           </div>
@@ -404,41 +404,41 @@ export default function MainPage() {
       <section className="py-20 px-6 max-w-5xl mx-auto border-b border-wedding-gold/10">
         <div className="text-center mb-16">
           <Calendar className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
-          <h2 className="font-playfair text-3xl sm:text-4xl text-wedding-gold tracking-wider">Event Details</h2>
+          <h2 className="font-playfair text-3xl sm:text-4xl text-wedding-wine tracking-wider font-bold">Event Details</h2>
           <div className="w-16 h-[1px] bg-wedding-gold/40 mx-auto mt-4"></div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           {/* Card 1: Time */}
-          <div className="glass-panel p-8 rounded-2xl border border-wedding-gold/15 text-center flex flex-col items-center">
-            <Clock className="w-8 h-8 text-wedding-gold mb-4" />
-            <h3 className="font-playfair text-lg text-wedding-beige font-semibold mb-2">When</h3>
-            <p className="text-sm text-wedding-beige/90">Saturday, October 10, 2026</p>
-            <p className="text-sm text-wedding-beige/70 mt-1">12:00 PM (GMT +1)</p>
+          <div className="bg-wedding-wine text-white p-8 rounded-2xl border border-wedding-gold/30 text-center flex flex-col items-center shadow-xl">
+            <Clock className="w-8 h-8 text-wedding-gold mb-4 animate-pulse" />
+            <h3 className="font-playfair text-lg text-wedding-gold font-bold mb-2">When</h3>
+            <p className="text-sm text-wedding-lightBeige font-medium">Saturday, October 10, 2026</p>
+            <p className="text-xs text-[#FAF8F5]/80 mt-1">12:00 PM (GMT +1)</p>
           </div>
 
           {/* Card 2: Venue */}
-          <div className="glass-panel p-8 rounded-2xl border border-wedding-gold/15 text-center flex flex-col items-center">
-            <MapPin className="w-8 h-8 text-wedding-gold mb-4" />
-            <h3 className="font-playfair text-lg text-wedding-beige font-semibold mb-2">Where</h3>
-            <p className="text-sm text-wedding-beige/90">Grand Imperial Hall</p>
-            <p className="text-sm text-wedding-beige/70 mt-1">Victoria Island, Lagos, Nigeria</p>
+          <div className="bg-wedding-wine text-white p-8 rounded-2xl border border-wedding-gold/30 text-center flex flex-col items-center shadow-xl">
+            <MapPin className="w-8 h-8 text-wedding-gold mb-4 animate-pulse" />
+            <h3 className="font-playfair text-lg text-wedding-gold font-bold mb-2">Where</h3>
+            <p className="text-sm text-wedding-lightBeige font-medium">Grand Imperial Hall</p>
+            <p className="text-xs text-[#FAF8F5]/80 mt-1">Victoria Island, Lagos, Nigeria</p>
           </div>
 
           {/* Card 3: Dress Code */}
-          <div className="glass-panel p-8 rounded-2xl border border-wedding-gold/15 text-center flex flex-col items-center">
-            <Shirt className="w-8 h-8 text-wedding-gold mb-4" />
-            <h3 className="font-playfair text-lg text-wedding-beige font-semibold mb-2">Dress Code</h3>
-            <p className="text-sm text-wedding-beige/90">Luxury African Glamour</p>
-            <p className="text-sm text-wedding-beige/70 mt-1">Colors: Emerald Green, Wine Red & Gold</p>
+          <div className="bg-wedding-wine text-white p-8 rounded-2xl border border-wedding-gold/30 text-center flex flex-col items-center shadow-xl">
+            <Shirt className="w-8 h-8 text-wedding-gold mb-4 animate-pulse" />
+            <h3 className="font-playfair text-lg text-wedding-gold font-bold mb-2">Dress Code</h3>
+            <p className="text-sm text-wedding-lightBeige font-medium">Luxury African Glamour</p>
+            <p className="text-xs text-[#FAF8F5]/80 mt-1">Colors: Emerald Green, Wine Red & Gold</p>
           </div>
         </div>
 
         {/* Map Embed & Dress Code Details */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
-          <div className="glass-panel p-6 rounded-2xl border border-wedding-gold/15 overflow-hidden h-[300px]">
+          <div className="bg-white p-6 rounded-2xl border-2 border-wedding-wine/10 overflow-hidden h-[300px] shadow-lg">
             <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1m4!2s6.4281!3d3.4219!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103bf53280e895c7%3A0xc0c4d29f8c6e26cf!2sVictoria+Island%2C+Lagos!5e0!3m2!1sen!2sng!4v1700000000000!5m2!1sen!2sng"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15858.07727192663!2d3.4093655767733475!3d6.428779646879803!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103bf53280e895c7%3A0xc0c4d29f8c6e26cf!2sVictoria+Island%2C+Lagos!5e0!3m2!1sen!2sng!4v1700000000000!5m2!1sen!2sng"
               className="w-full h-full border-0 rounded-lg"
               allowFullScreen=""
               loading="lazy"
@@ -446,14 +446,14 @@ export default function MainPage() {
             ></iframe>
           </div>
 
-          <div className="glass-panel p-8 rounded-2xl border border-wedding-gold/15 flex flex-col justify-center">
-            <h3 className="font-playfair text-xl text-wedding-gold mb-4 flex items-center gap-2">
+          <div className="bg-gradient-to-br from-[#3D1B1E] to-[#250E10] text-[#FAF8F5] p-8 rounded-2xl border border-wedding-gold/30 flex flex-col justify-center shadow-xl">
+            <h3 className="font-playfair text-xl text-wedding-gold mb-4 flex items-center gap-2 font-bold">
               <Shirt className="w-5 h-5 text-wedding-gold" /> Aso Ebi Inspiration
             </h3>
-            <p className="text-sm text-wedding-beige/80 leading-relaxed mb-4">
+            <p className="text-sm text-wedding-lightBeige leading-relaxed mb-4">
               To celebrate our heritage and color harmony, we invite our guests to wear our selected colors: **Emerald Green** or **Wine Red** styled with beautiful **Gold** accents.
             </p>
-            <p className="text-sm text-wedding-beige/80 leading-relaxed">
+            <p className="text-sm text-wedding-lightBeige/90 leading-relaxed font-semibold">
               For info regarding fabric purchases and tailors, please connect with the Aso Ebi Coordinator: **080-Wedding-Aso-Ebi**.
             </p>
           </div>
@@ -463,7 +463,7 @@ export default function MainPage() {
       {/* 4. COLOR THEME PALETTE */}
       <section className="py-20 px-6 max-w-4xl mx-auto border-b border-wedding-gold/10">
         <div className="text-center mb-12">
-          <h2 className="font-playfair text-2xl sm:text-3xl text-wedding-gold tracking-wider">Wedding Color Palette</h2>
+          <h2 className="font-playfair text-2xl sm:text-3xl text-wedding-wine font-bold tracking-wider">Wedding Color Palette</h2>
           <div className="w-16 h-[1px] bg-wedding-gold/40 mx-auto mt-3"></div>
         </div>
 
@@ -471,25 +471,25 @@ export default function MainPage() {
           {/* Color Card: Wine */}
           <div className="w-24 sm:w-32 text-center">
             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-wedding-wine border border-wedding-gold/30 shadow-lg mx-auto mb-3"></div>
-            <span className="font-playfair text-sm text-wedding-beige">Wine Red</span>
+            <span className="font-playfair text-sm text-wedding-wineDark font-bold">Wine Red</span>
           </div>
 
           {/* Color Card: Beige */}
           <div className="w-24 sm:w-32 text-center">
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-wedding-beige border border-wedding-gold/30 shadow-lg mx-auto mb-3"></div>
-            <span className="font-playfair text-sm text-wedding-beige">Luxury Beige</span>
+            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-wedding-lightBeige border border-wedding-gold/30 shadow-lg mx-auto mb-3"></div>
+            <span className="font-playfair text-sm text-wedding-wineDark font-bold">Luxury Beige</span>
           </div>
 
           {/* Color Card: Emerald */}
           <div className="w-24 sm:w-32 text-center">
             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-wedding-emerald border border-wedding-gold/30 shadow-lg mx-auto mb-3"></div>
-            <span className="font-playfair text-sm text-wedding-beige">Emerald Green</span>
+            <span className="font-playfair text-sm text-wedding-wineDark font-bold">Emerald Green</span>
           </div>
 
           {/* Color Card: Gold */}
           <div className="w-24 sm:w-32 text-center">
             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-wedding-gold border border-wedding-gold/30 shadow-lg mx-auto mb-3"></div>
-            <span className="font-playfair text-sm text-wedding-beige">Royal Gold</span>
+            <span className="font-playfair text-sm text-wedding-wineDark font-bold">Royal Gold</span>
           </div>
         </div>
       </section>
@@ -498,13 +498,13 @@ export default function MainPage() {
       <section id="rsvp" className="py-20 px-6 max-w-2xl mx-auto border-b border-wedding-gold/10 scroll-mt-20">
         <div className="text-center mb-12">
           <Heart className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
-          <h2 className="font-playfair text-3xl text-wedding-gold tracking-wider">RSVP</h2>
-          <p className="text-sm text-wedding-beige/70 mt-1">Please confirm your attendance by submitting the RSVP below.</p>
+          <h2 className="font-playfair text-3xl text-wedding-wine tracking-wider font-bold">RSVP</h2>
+          <p className="text-sm text-wedding-wineDark font-medium mt-1">Please confirm your attendance by submitting the RSVP below.</p>
           <div className="w-16 h-[1px] bg-wedding-gold/40 mx-auto mt-4"></div>
         </div>
 
         {/* RSVP FORM OR SUCCESS SCREEN */}
-        <div className="glass-panel p-8 rounded-3xl border border-wedding-gold/25 relative overflow-hidden">
+        <div className="bg-gradient-to-br from-[#3D1B1E] to-[#250E10] text-[#FAF8F5] p-8 rounded-3xl border border-wedding-gold/30 relative overflow-hidden shadow-2xl">
           {/* Gold Decorative Corner Lines */}
           <div className="absolute top-2 left-2 w-6 h-6 border-t border-l border-wedding-gold/20"></div>
           <div className="absolute top-2 right-2 w-6 h-6 border-t border-r border-wedding-gold/20"></div>
@@ -514,19 +514,19 @@ export default function MainPage() {
           {!rsvpSuccess ? (
             <form onSubmit={handleSubmit(onSubmitRSVP)} className="space-y-6">
               {/* Max Guest Limits Indicator */}
-              <div className="flex items-center gap-3 bg-wedding-wine/25 border border-wedding-wine/40 p-4 rounded-xl">
+              <div className="flex items-center gap-3 bg-wedding-wine/45 border border-wedding-wine/20 p-4 rounded-xl">
                 <Info className="w-6 h-6 text-wedding-gold shrink-0" />
-                <p className="text-xs text-wedding-beige/90 leading-relaxed">
-                  Hi **{invite?.familyName || 'Guest'}**, you are allocated a maximum of **{invite?.maxGuests || 2} guests** (including yourself). Please specify the number of attendees below.
+                <p className="text-xs text-wedding-lightBeige leading-relaxed">
+                  Hi <strong className="text-white">{invite?.familyName || 'Guest'}</strong>, you are allocated a maximum of <strong className="text-white">{invite?.maxGuests || 2} guests</strong> (including yourself). Please specify the number of attendees below.
                 </p>
               </div>
 
               {/* Number of Attendees selector */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-wedding-beige/85">How many guests are attending?</label>
+                <label className="block text-sm font-medium text-wedding-lightBeige">How many guests are attending?</label>
                 <select 
                   onChange={(e) => handleGuestCountChange(parseInt(e.target.value))}
-                  className="w-full bg-wedding-darkCard border border-wedding-gold/30 rounded-xl px-4 py-3 text-wedding-beige focus:outline-none focus:border-wedding-gold"
+                  className="w-full bg-white border border-wedding-gold/30 rounded-xl px-4 py-3 text-wedding-wineDark font-medium focus:outline-none focus:border-wedding-gold"
                 >
                   {Array.from({ length: invite?.maxGuests || 2 }, (_, i) => i + 1).map((num) => (
                     <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
@@ -536,10 +536,10 @@ export default function MainPage() {
 
               {/* Attendee Name inputs */}
               <div className="space-y-4 pt-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-wedding-gold">Attendee Details</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-wedding-gold">Attendee Details</p>
                 {fields.map((field, index) => (
-                  <div key={field.id} className="space-y-3 p-4 bg-wedding-darkCard/40 border border-wedding-gold/10 rounded-xl">
-                    <p className="text-xs font-medium text-wedding-beige/50">Guest #{index + 1}</p>
+                  <div key={field.id} className="space-y-3 p-4 bg-[#240A0C]/50 border border-wedding-gold/15 rounded-xl">
+                    <p className="text-xs font-bold text-wedding-gold/80">Guest #{index + 1}</p>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
@@ -547,10 +547,10 @@ export default function MainPage() {
                           type="text"
                           placeholder="Full Name (Required)"
                           {...register(`attendees.${index}.fullName`, { required: 'Name is required' })}
-                          className="w-full bg-wedding-darkCard border border-wedding-gold/20 rounded-lg px-3 py-2 text-sm text-wedding-beige focus:outline-none focus:border-wedding-gold"
+                          className="w-full bg-white border border-wedding-gold/20 rounded-lg px-3 py-2 text-sm text-wedding-wineDark font-medium focus:outline-none focus:border-wedding-gold"
                         />
                         {errors?.attendees?.[index]?.fullName && (
-                          <span className="text-[10px] text-wedding-wine mt-1 block">{errors.attendees[index].fullName.message}</span>
+                          <span className="text-[10px] text-red-400 mt-1 block">{errors.attendees[index].fullName.message}</span>
                         )}
                       </div>
 
@@ -559,7 +559,7 @@ export default function MainPage() {
                           type="text"
                           placeholder="Phone Number (Optional)"
                           {...register(`attendees.${index}.phoneNumber`)}
-                          className="w-full bg-wedding-darkCard border border-wedding-gold/20 rounded-lg px-3 py-2 text-sm text-wedding-beige focus:outline-none focus:border-wedding-gold"
+                          className="w-full bg-white border border-wedding-gold/20 rounded-lg px-3 py-2 text-sm text-wedding-wineDark font-medium focus:outline-none focus:border-wedding-gold"
                         />
                       </div>
                     </div>
@@ -570,7 +570,7 @@ export default function MainPage() {
               {/* Submit button */}
               <button
                 type="submit"
-                className="w-full py-4 bg-wedding-wine text-wedding-beige hover:bg-wedding-wineDark transition-all duration-300 font-playfair tracking-widest text-sm rounded-xl border border-wedding-gold/20 hover:border-wedding-gold hover:shadow-lg mt-4"
+                className="w-full py-4 bg-wedding-gold text-wedding-wineDark hover:bg-wedding-goldLight transition-all duration-300 font-playfair font-bold tracking-widest text-sm rounded-xl border border-wedding-goldLight/20 hover:shadow-lg mt-4"
               >
                 SUBMIT RSVP
               </button>
@@ -578,15 +578,15 @@ export default function MainPage() {
           ) : (
             /* RSVP SUCCESS SCREEN */
             <div className="text-center space-y-6 py-4 flex flex-col items-center">
-              <CheckCircle className="w-16 h-16 text-wedding-gold animate-bounce" />
+              <CheckCircle className="w-16 h-16 text-wedding-goldLight animate-bounce" />
               <div>
                 <h3 className="font-playfair text-2xl text-wedding-gold">RSVP Confirmed!</h3>
-                <p className="text-sm text-wedding-beige/80 mt-1">Thank you for confirming your attendance, {invite?.familyName} Family.</p>
+                <p className="text-sm text-wedding-lightBeige mt-1">Thank you for confirming your attendance, {invite?.familyName} Family.</p>
               </div>
 
               {/* Serial number box */}
-              <div className="bg-wedding-wine/25 border border-wedding-wine/40 px-6 py-4 rounded-2xl inline-block">
-                <span className="text-xs text-wedding-gold/60 uppercase tracking-widest font-semibold block">Entry Serial Number</span>
+              <div className="bg-[#240A0C] border border-wedding-gold/30 px-6 py-4 rounded-2xl inline-block shadow-md">
+                <span className="text-xs text-wedding-goldLight/80 uppercase tracking-widest font-bold block">Entry Serial Number</span>
                 <span className="text-xl sm:text-2xl font-mono text-wedding-gold font-bold tracking-wider mt-1 block">
                   {rsvpData?.serialNumber || 'AAL-XXXXXX'}
                 </span>
@@ -594,14 +594,14 @@ export default function MainPage() {
 
               {/* QR Code Container */}
               {rsvpData?.qrCode && (
-                <div className="bg-wedding-beige p-3 rounded-2xl inline-block border-2 border-wedding-gold/40 shadow-xl">
+                <div className="bg-white p-3 rounded-2xl inline-block border-2 border-wedding-gold/40 shadow-xl">
                   <img src={rsvpData.qrCode} alt="Entry QR Code" className="w-40 h-40" />
                 </div>
               )}
 
-              <div className="max-w-md bg-wedding-darkCard/60 border border-wedding-gold/10 p-4 rounded-xl text-left">
-                <p className="text-[11px] text-wedding-gold font-semibold uppercase tracking-wider mb-2">Important Instructions:</p>
-                <ul className="text-[11px] text-wedding-beige/80 space-y-1.5 list-disc pl-4">
+              <div className="max-w-md bg-[#240A0C]/50 border border-wedding-gold/15 p-4 rounded-xl text-left">
+                <p className="text-[11px] text-wedding-gold font-bold uppercase tracking-wider mb-2">Important Instructions:</p>
+                <ul className="text-[11px] text-wedding-lightBeige/90 space-y-1.5 list-disc pl-4">
                   <li>Please **save or download this QR Code** to your device.</li>
                   <li>Present this serial number or QR code to the check-in bouncers at the wedding venue entrance.</li>
                   <li>The QR code authorizes entry for exactly **{rsvpData?.attendanceCount || invite?.maxGuests} guests**.</li>
@@ -612,7 +612,7 @@ export default function MainPage() {
               {rsvpData?.qrCode && (
                 <button
                   onClick={downloadQRCode}
-                  className="px-6 py-2.5 bg-wedding-wine text-wedding-beige hover:bg-wedding-wineDark transition-all duration-300 font-playfair text-xs tracking-wider rounded-lg border border-wedding-gold/20 flex items-center justify-center gap-2 hover:shadow-lg"
+                  className="px-6 py-2.5 bg-wedding-gold text-wedding-wineDark hover:bg-wedding-goldLight transition-all duration-300 font-playfair font-bold text-xs tracking-wider rounded-lg border border-wedding-goldLight/20 flex items-center justify-center gap-2 hover:shadow-lg"
                 >
                   <Download className="w-4 h-4" /> DOWNLOAD QR CODE
                 </button>
@@ -626,12 +626,12 @@ export default function MainPage() {
       <section id="support" className="py-20 px-6 max-w-2xl mx-auto border-b border-wedding-gold/10 scroll-mt-20">
         <div className="text-center mb-12">
           <Gift className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
-          <h2 className="font-playfair text-3xl text-wedding-gold tracking-wider">Support Our Wedding</h2>
-          <p className="text-sm text-wedding-beige/70 mt-1">If you wish to honor us with a financial gift, you can use the secure Paystack checkout below.</p>
+          <h2 className="font-playfair text-3xl text-wedding-wine tracking-wider font-bold">Support Our Wedding</h2>
+          <p className="text-sm text-wedding-wineDark font-medium mt-1">If you wish to honor us with a financial gift, you can use the secure Paystack checkout below.</p>
           <div className="w-16 h-[1px] bg-wedding-gold/40 mx-auto mt-4"></div>
         </div>
 
-        <div className="glass-panel p-8 rounded-3xl border border-wedding-gold/25 text-center relative overflow-hidden">
+        <div className="bg-gradient-to-br from-[#3D1B1E] to-[#250E10] text-[#FAF8F5] p-8 rounded-3xl border border-wedding-gold/30 text-center relative overflow-hidden shadow-2xl">
           {/* Gold Decorative Corner Lines */}
           <div className="absolute top-2 left-2 w-6 h-6 border-t border-l border-wedding-gold/20"></div>
           <div className="absolute top-2 right-2 w-6 h-6 border-t border-r border-wedding-gold/20"></div>
@@ -648,8 +648,8 @@ export default function MainPage() {
                     onClick={() => setDonationAmount(preset.toString())}
                     className={`py-3 rounded-xl font-playfair border text-xs tracking-wider transition-all duration-200 ${
                       donationAmount === preset.toString()
-                        ? 'bg-wedding-wine border-wedding-gold text-wedding-beige'
-                        : 'bg-wedding-darkCard/40 border-wedding-gold/15 text-wedding-beige/80 hover:border-wedding-gold/40'
+                        ? 'bg-wedding-gold border-wedding-gold text-wedding-wineDark font-bold'
+                        : 'bg-[#240A0C]/50 border-wedding-gold/20 text-[#FAF8F5]/90 hover:border-wedding-gold/50'
                     }`}
                   >
                     ₦{preset.toLocaleString()}
@@ -659,27 +659,27 @@ export default function MainPage() {
 
               {/* Custom Input */}
               <div className="space-y-2 text-left">
-                <label className="block text-sm font-medium text-wedding-beige/85">Or enter a custom amount (NGN)</label>
+                <label className="block text-sm font-medium text-wedding-lightBeige">Or enter a custom amount (NGN)</label>
                 <input
                   type="number"
                   placeholder="Enter custom amount ₦"
                   value={donationAmount}
                   onChange={(e) => setDonationAmount(e.target.value)}
-                  className="w-full bg-wedding-darkCard border border-wedding-gold/30 rounded-xl px-4 py-3 text-wedding-beige focus:outline-none focus:border-wedding-gold"
+                  className="w-full bg-white border border-wedding-gold/30 rounded-xl px-4 py-3 text-wedding-wineDark font-medium focus:outline-none focus:border-wedding-gold"
                 />
               </div>
 
               {/* Name Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-wedding-beige/85">Your Name (Optional)</label>
+                  <label className="block text-sm font-medium text-wedding-lightBeige">Your Name (Optional)</label>
                   <input
                     type="text"
                     placeholder="Enter your name"
                     value={donorName}
                     disabled={isAnonymous}
                     onChange={(e) => setDonorName(e.target.value)}
-                    className="w-full bg-wedding-darkCard border border-wedding-gold/20 rounded-xl px-3 py-2.5 text-sm text-wedding-beige focus:outline-none focus:border-wedding-gold disabled:opacity-40"
+                    className="w-full bg-white border border-wedding-gold/20 rounded-xl px-3 py-2.5 text-sm text-wedding-wineDark font-medium focus:outline-none focus:border-wedding-gold disabled:opacity-40"
                   />
                 </div>
 
@@ -689,9 +689,9 @@ export default function MainPage() {
                     id="anonymous"
                     checked={isAnonymous}
                     onChange={(e) => setIsAnonymous(e.target.checked)}
-                    className="rounded border-wedding-gold/30 bg-wedding-darkCard text-wedding-wine focus:ring-0 focus:ring-offset-0 w-5 h-5"
+                    className="rounded border-wedding-gold/30 bg-[#240A0C] text-wedding-wine focus:ring-0 focus:ring-offset-0 w-5 h-5"
                   />
-                  <label htmlFor="anonymous" className="text-sm text-wedding-beige/80 cursor-pointer select-none">Send Anonymously</label>
+                  <label htmlFor="anonymous" className="text-sm text-wedding-lightBeige/85 cursor-pointer select-none">Send Anonymously</label>
                 </div>
               </div>
 
@@ -699,21 +699,21 @@ export default function MainPage() {
               <button
                 onClick={handleSupportPayment}
                 disabled={paymentLoading}
-                className="w-full py-4 bg-[#133015] hover:bg-wedding-emeraldDark text-wedding-beige hover:shadow-lg transition-all duration-300 font-playfair tracking-widest text-sm rounded-xl border border-wedding-gold/20 hover:border-wedding-gold flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
+                className="w-full py-4 bg-wedding-emerald hover:bg-wedding-emeraldLight text-white hover:shadow-lg transition-all duration-300 font-playfair font-bold tracking-widest text-sm rounded-xl border border-wedding-emerald/40 hover:border-wedding-gold flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
               >
                 {paymentLoading ? 'PROCEEDING TO CHECKOUT...' : 'SUPPORT WITH PAYSTACK'}
               </button>
             </div>
           ) : (
             <div className="py-6 space-y-4 flex flex-col items-center">
-              <CheckCircle className="w-16 h-16 text-wedding-gold animate-bounce" />
+              <CheckCircle className="w-16 h-16 text-wedding-goldLight animate-bounce" />
               <div>
                 <h3 className="font-playfair text-2xl text-wedding-gold">Payment Verified!</h3>
-                <p className="text-sm text-wedding-beige/80 mt-1">Thank you immensely for your kind financial support. May your pockets be replenished in multiple folds.</p>
+                <p className="text-sm text-wedding-lightBeige mt-1">Thank you immensely for your kind financial support. May your pockets be replenished in multiple folds.</p>
               </div>
               <button
                 onClick={() => setDonationSuccess(false)}
-                className="px-6 py-2 bg-wedding-wine text-wedding-beige rounded-xl text-xs font-playfair tracking-wider hover:bg-wedding-wineDark transition-all"
+                className="px-6 py-2 bg-wedding-gold text-wedding-wineDark rounded-xl text-xs font-playfair tracking-wider hover:bg-wedding-goldLight transition-all"
               >
                 SUPPORT AGAIN
               </button>
@@ -726,41 +726,41 @@ export default function MainPage() {
       <section id="gallery" className="py-20 px-6 max-w-5xl mx-auto">
         <div className="text-center mb-12">
           <Camera className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
-          <h2 className="font-playfair text-3xl text-wedding-gold tracking-wider">Wedding Photo Gallery</h2>
-          <p className="text-sm text-wedding-beige/70 mt-1">Capture and share your favorite moments from the wedding ceremony with us.</p>
+          <h2 className="font-playfair text-3xl text-wedding-wine tracking-wider font-bold">Wedding Photo Gallery</h2>
+          <p className="text-sm text-wedding-wineDark font-medium mt-1">Capture and share your favorite moments from the wedding ceremony with us.</p>
           <div className="w-16 h-[1px] bg-wedding-gold/40 mx-auto mt-4"></div>
         </div>
 
         {/* Upload Form Box */}
-        <div className="glass-panel p-8 rounded-3xl border border-wedding-gold/25 max-w-xl mx-auto mb-16 relative">
-          <h3 className="font-playfair text-lg text-wedding-gold mb-4 text-center">Share a Moment</h3>
+        <div className="bg-gradient-to-br from-[#3D1B1E] to-[#250E10] text-[#FAF8F5] p-8 rounded-3xl border border-wedding-gold/30 max-w-xl mx-auto mb-16 relative shadow-2xl">
+          <h3 className="font-playfair text-lg text-wedding-gold mb-4 text-center font-bold">Share a Moment</h3>
           <form onSubmit={handleUploadPhoto} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs text-wedding-beige/70">Your Name</label>
+                <label className="text-xs text-wedding-lightBeige">Your Name</label>
                 <input
                   type="text"
                   placeholder="Guest name"
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
-                  className="w-full bg-wedding-darkCard border border-wedding-gold/20 rounded-xl px-3 py-2 text-xs text-wedding-beige focus:outline-none focus:border-wedding-gold"
+                  className="w-full bg-white border border-wedding-gold/20 rounded-xl px-3 py-2 text-xs text-wedding-wineDark font-medium focus:outline-none focus:border-wedding-gold"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs text-wedding-beige/70">Select Image (Max 10MB)</label>
+                <label className="text-xs text-wedding-lightBeige">Select Image (Max 10MB)</label>
                 <input
                   type="file"
                   id="file-upload"
                   accept="image/*"
                   onChange={handleFileChange}
-                  className="w-full text-xs text-wedding-beige/60 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border file:border-wedding-gold/20 file:bg-wedding-darkCard file:text-wedding-gold file:text-xs hover:file:bg-wedding-wine/25"
+                  className="w-full text-xs text-wedding-lightBeige/80 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border file:border-wedding-gold/20 file:bg-[#240A0C] file:text-wedding-gold file:text-xs hover:file:bg-[#3B1519]"
                 />
               </div>
             </div>
 
             {uploadMsg && (
-              <p className="text-xs text-wedding-gold bg-wedding-wine/10 border border-wedding-gold/10 p-2.5 rounded-lg text-center font-medium">
+              <p className="text-xs text-wedding-gold bg-[#240A0C] border border-[#AA7C11]/30 p-2.5 rounded-lg text-center font-medium">
                 {uploadMsg}
               </p>
             )}
@@ -768,7 +768,7 @@ export default function MainPage() {
             <button
               type="submit"
               disabled={uploadLoading}
-              className="w-full py-3 bg-wedding-wine text-wedding-beige hover:bg-wedding-wineDark transition-all duration-300 font-playfair tracking-widest text-xs rounded-xl border border-wedding-gold/20 hover:border-wedding-gold flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3 bg-wedding-wine text-[#FAF8F5] hover:bg-wedding-wineDark transition-all duration-300 font-playfair font-bold tracking-widest text-xs rounded-xl border border-wedding-gold/20 flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <Upload className="w-4 h-4" /> {uploadLoading ? 'UPLOADING...' : 'UPLOAD PICTURE'}
             </button>
@@ -777,12 +777,12 @@ export default function MainPage() {
 
         {/* Gallery Grid */}
         <div>
-          <h3 className="font-playfair text-xl text-wedding-gold mb-6 text-center">Moments Captured</h3>
+          <h3 className="font-playfair text-xl text-wedding-wine font-bold mb-6 text-center">Moments Captured</h3>
           
           {photos.length === 0 ? (
-            <div className="text-center py-10 glass-panel rounded-2xl border border-wedding-gold/15">
+            <div className="text-center py-10 bg-white rounded-2xl border border-wedding-gold/15">
               <Camera className="w-12 h-12 text-wedding-gold/30 mx-auto mb-2" />
-              <p className="text-sm text-wedding-beige/60 italic">No approved photos in the gallery yet. Be the first to upload!</p>
+              <p className="text-sm text-wedding-wineDark/70 italic">No approved photos in the gallery yet. Be the first to upload!</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -795,7 +795,7 @@ export default function MainPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-3 flex flex-col justify-end">
                     <span className="text-[10px] text-wedding-gold font-semibold uppercase tracking-wider block">Uploaded By:</span>
-                    <span className="text-[11px] text-wedding-beige font-medium">{photo.uploadedBy}</span>
+                    <span className="text-[11px] text-[#FAF8F5] font-medium">{photo.uploadedBy}</span>
                   </div>
                 </div>
               ))}

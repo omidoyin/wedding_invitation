@@ -74,7 +74,9 @@ export async function checkIn(req, res) {
       data: {
         checkedIn: true,
         checkedInAt: new Date(),
-        checkInPhoto: checkInPhotoUrl
+        checkInPhoto: checkInPhotoUrl,
+        checkedOut: false,
+        checkedOutAt: null
       },
       include: {
         attendees: true,
@@ -93,6 +95,54 @@ export async function checkIn(req, res) {
     });
   } catch (error) {
     console.error('Error during check-in:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function checkOut(req, res) {
+  const { serialNumber } = req.body;
+
+  if (!serialNumber) {
+    return res.status(400).json({ error: 'Serial number is required.' });
+  }
+
+  try {
+    const rsvp = await prisma.rSVP.findUnique({
+      where: { serialNumber: serialNumber },
+      include: { invite: true }
+    });
+
+    if (!rsvp) {
+      return res.status(404).json({ error: 'RSVP record not found for this serial number.' });
+    }
+
+    if (!rsvp.checkedIn) {
+      return res.status(400).json({ error: 'This guest is not currently checked in.' });
+    }
+
+    // Update RSVP record
+    const updatedRSVP = await prisma.rSVP.update({
+      where: { id: rsvp.id },
+      data: {
+        checkedIn: false,
+        checkedOut: true,
+        checkedOutAt: new Date()
+      },
+      include: {
+        attendees: true,
+        invite: true
+      }
+    });
+
+    res.json({
+      message: 'Check-out successful!',
+      familyName: updatedRSVP.invite.familyName,
+      serialNumber: updatedRSVP.serialNumber,
+      attendanceCount: updatedRSVP.attendanceCount,
+      checkedOutAt: updatedRSVP.checkedOutAt
+    });
+  } catch (error) {
+    console.error('Error during check-out:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }

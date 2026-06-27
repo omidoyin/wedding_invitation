@@ -389,8 +389,14 @@ export default function AdminDashboard() {
                       <td className="py-3.5 pr-4 select-all font-mono text-wedding-gold">
                         invite/{invite.inviteToken}
                       </td>
-                      <td className="py-3.5 text-wedding-beige/80">
-                        {invite.rsvp?.checkedIn ? 'Yes' : 'No'}
+                      <td className="py-3.5 font-semibold">
+                        {invite.rsvp?.checkedIn ? (
+                          <span className="text-wedding-emeraldLight">Checked In</span>
+                        ) : invite.rsvp?.checkedOut ? (
+                          <span className="text-wedding-wineLight">Checked Out</span>
+                        ) : (
+                          <span className="text-gray-500">No</span>
+                        )}
                       </td>
                     </tr>
                   ))}

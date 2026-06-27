@@ -28,6 +28,8 @@ model RSVP {
   checkedIn         Boolean   @default(false)
   checkedInAt       DateTime?
   checkInPhoto      String?
+  checkedOut        Boolean   @default(false)
+  checkedOutAt      DateTime?
   createdAt         DateTime  @default(now())
   invite            Invite    @relation(fields: [inviteId], references: [id], onDelete: Cascade)
   attendees         Attendee[]

@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { searchGuest, checkIn } from '../controllers/checkinController.js';
+import { searchGuest, checkIn,checkOut } from '../controllers/checkinController.js';
 import { authenticate, authorize } from '../middleware/authMiddleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -44,5 +44,6 @@ const router = express.Router();
 // Both Admins and Bouncers can search and perform check-ins
 router.get('/search', authenticate, authorize(['Admin', 'Staff/Bouncer']), searchGuest);
 router.post('/', authenticate, authorize(['Admin', 'Staff/Bouncer']), upload.single('photo'), checkIn);
+router.post('/checkout', authenticate, authorize(['Admin', 'Staff/Bouncer']), checkOut);
 
 export default router;

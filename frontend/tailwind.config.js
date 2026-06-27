@@ -11,16 +11,17 @@ export default {
           wine: '#722F37',
           wineDark: '#4A1D23',
           wineLight: '#8C3D46',
-          beige: '#F5F5DC',
+          beige: '#3D1B1E',
           beigeDark: '#E6E6C5',
+          lightBeige: '#F5F5DC',
           emerald: '#046307',
           emeraldDark: '#023804',
           emeraldLight: '#058C0A',
           gold: '#D4AF37',
           goldDark: '#B8942A',
           goldLight: '#E5C04A',
-          darkBg: '#0F0F10',
-          darkCard: '#1A1A1E'
+          darkBg: '#FAF8F5',
+          darkCard: '#FFFFFF'
         }
       },
       fontFamily: {

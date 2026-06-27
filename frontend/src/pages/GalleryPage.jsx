@@ -123,7 +123,7 @@ export default function GalleryPage() {
               <button
                 type="submit"
                 disabled={uploadLoading}
-                className="w-full py-4 bg-wedding-wine text-wedding-beige hover:bg-wedding-wineDark transition-all duration-300 font-playfair tracking-widest text-xs rounded-xl border border-wedding-gold/20 hover:border-wedding-gold flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-4 bg-wedding-wine text-[#FAF8F5] font-bold hover:bg-wedding-wineDark transition-all duration-300 font-playfair tracking-widest text-xs rounded-xl border border-wedding-gold/20 hover:border-wedding-gold flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Upload className="w-4 h-4" /> {uploadLoading ? 'UPLOADING...' : 'UPLOAD PICTURE'}
               </button>
@@ -155,7 +155,7 @@ export default function GalleryPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4 flex flex-col justify-end">
                     <span className="text-[10px] text-wedding-gold font-semibold uppercase tracking-wider block">Uploaded By:</span>
-                    <span className="text-[12px] text-wedding-beige font-medium">{photo.uploadedBy}</span>
+                    <span className="text-[12px] text-[#FAF8F5] font-medium">{photo.uploadedBy}</span>
                   </div>
                 </div>
               ))}

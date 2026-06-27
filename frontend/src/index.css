@@ -4,8 +4,8 @@
 
 @layer base {
   body {
-    background-color: #0F0F10;
-    color: #F5F5DC;
+    background-color: #FAF8F5;
+    color: #3D1B1E;
   }
 }
 
@@ -14,7 +14,7 @@
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0F0F10;
+  background: #FAF8F5;
 }
 ::-webkit-scrollbar-thumb {
   background: #722F37;
@@ -26,17 +26,17 @@
 
 /* Glassmorphism Classes */
 .glass-panel {
-  background: rgba(26, 26, 30, 0.45);
+  background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(114, 47, 55, 0.15);
 }
 
 .glass-panel-heavy {
-  background: rgba(15, 15, 16, 0.85);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(212, 175, 55, 0.25);
+  border: 1px solid rgba(114, 47, 55, 0.25);
 }
 
 /* Golden text gradient */

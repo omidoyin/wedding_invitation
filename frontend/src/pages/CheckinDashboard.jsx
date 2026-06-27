@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Search, ShieldAlert, CheckCircle2, Camera, LogOut, 
-  X, RefreshCcw, UserCheck, AlertCircle, FileImage 
+  X, RefreshCcw, UserCheck, AlertCircle, FileImage, QrCode
 } from 'lucide-react';
+import { Html5Qrcode } from 'html5-qrcode';
 
 export default function CheckinDashboard() {
   const navigate = useNavigate();
@@ -25,6 +26,10 @@ export default function CheckinDashboard() {
   // File fallback state
   const [fileFallback, setFileFallback] = useState(null);
   const [fileUrl, setFileUrl] = useState('');
+
+  // QR scanner state
+  const [qrScannerActive, setQrScannerActive] = useState(false);
+  const [qrScannerError, setQrScannerError] = useState('');
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -57,10 +62,8 @@ export default function CheckinDashboard() {
     navigate('/admin/login');
   };
 
-  const handleSearch = async (e) => {
-    if (e) e.preventDefault();
-    if (!searchQuery.trim()) return;
-
+  const performSearch = async (queryText) => {
+    if (!queryText || !queryText.trim()) return;
     setSearching(true);
     setError('');
     setSearchResults([]);
@@ -68,7 +71,7 @@ export default function CheckinDashboard() {
     try {
       const headers = { Authorization: `Bearer ${token}` };
       const res = await axios.get(`${API_URL}/checkin/search`, {
-        params: { query: searchQuery.trim() },
+        params: { query: queryText.trim() },
         headers
       });
       setSearchResults(res.data);
@@ -82,6 +85,65 @@ export default function CheckinDashboard() {
       setSearching(false);
     }
   };
+
+  const handleSearch = (e) => {
+    if (e) e.preventDefault();
+    performSearch(searchQuery);
+  };
+
+  // QR Code camera scanner lifecycle
+  useEffect(() => {
+    let html5QrCode = null;
+
+    if (qrScannerActive) {
+      setQrScannerError('');
+      const timer = setTimeout(() => {
+        try {
+          html5QrCode = new Html5Qrcode("qr-reader");
+          html5QrCode.start(
+            { facingMode: "environment" },
+            {
+              fps: 10,
+              qrbox: (width, height) => {
+                const size = Math.min(width, height) * 0.7;
+                return { width: size, height: size };
+              }
+            },
+            (decodedText) => {
+              setSearchQuery(decodedText);
+              performSearch(decodedText);
+              if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                  setQrScannerActive(false);
+                }).catch(err => {
+                  console.error('Error stopping QR scanner:', err);
+                  setQrScannerActive(false);
+                });
+              } else {
+                setQrScannerActive(false);
+              }
+            },
+            (errorMessage) => {
+              // Ignore normal scanning updates
+            }
+          ).catch(err => {
+            console.error("Camera startup error:", err);
+            setQrScannerError("Could not start camera. Please verify permission.");
+          });
+        } catch (e) {
+          console.error("Scanner initialization failed:", e);
+          setQrScannerError("Scanner initialization failed.");
+        }
+      }, 300);
+
+      return () => {
+        clearTimeout(timer);
+        if (html5QrCode && html5QrCode.isScanning) {
+          html5QrCode.stop().catch(err => console.error("Error stopping scanner on cleanup:", err));
+        }
+      };
+    }
+  }, [qrScannerActive]);
 
   // Start Camera Feed
   const startCamera = async () => {
@@ -102,7 +164,6 @@ export default function CheckinDashboard() {
       }
     } catch (err) {
       console.error('Camera access error, switching to file upload fallback:', err);
-      // Disable camera mode, let bouncer use file input fallback
       setCameraActive(false);
       setError('Camera access denied or unsupported. Please upload a photo instead.');
     }
@@ -125,14 +186,11 @@ export default function CheckinDashboard() {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
 
-    // Set canvas dimensions to match video stream
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    // Draw video frame to canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Convert canvas to Blob
     canvas.toBlob((blob) => {
       setCapturedBlob(blob);
       setCapturedUrl(URL.createObjectURL(blob));
@@ -152,20 +210,16 @@ export default function CheckinDashboard() {
     }
   };
 
-  // Submit Check-in
+  // Submit Check-in (Photo is optional)
   const submitCheckin = async () => {
-    const fileToUpload = capturedBlob || fileFallback;
-
-    if (!fileToUpload) {
-      alert('Please snap a photo or select an image file to check-in.');
-      return;
-    }
-
     setCheckinLoading(true);
 
+    const fileToUpload = capturedBlob || fileFallback;
     const formData = new FormData();
     formData.append('serialNumber', activeCheckinRsvp.serialNumber);
-    formData.append('photo', fileToUpload, 'checkin.jpg');
+    if (fileToUpload) {
+      formData.append('photo', fileToUpload, 'checkin.jpg');
+    }
 
     try {
       const headers = { 
@@ -176,14 +230,32 @@ export default function CheckinDashboard() {
       const res = await axios.post(`${API_URL}/checkin`, formData, { headers });
       alert(`Guest checked in successfully! \nFamily: ${res.data.familyName} \nGuests: ${res.data.attendanceCount}`);
       
-      // Reset State
       closeCheckinModal();
-      handleSearch(); // Refresh search results
+      performSearch(searchQuery); // Refresh search results
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.error || 'Failed to complete check-in.');
     } finally {
       setCheckinLoading(false);
+    }
+  };
+
+  const handleCheckout = async (rsvp) => {
+    if (!window.confirm(`Are you sure you want to CHECK OUT the ${rsvp.invite.familyName} family?`)) {
+      return;
+    }
+
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await axios.post(`${API_URL}/checkin/checkout`, {
+        serialNumber: rsvp.serialNumber
+      }, { headers });
+
+      alert(`Guest checked out successfully! \nFamily: ${res.data.familyName}`);
+      performSearch(searchQuery); // Refresh search results
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.error || 'Failed to check-out.');
     }
   };
 
@@ -222,20 +294,30 @@ export default function CheckinDashboard() {
         {/* Search Bar */}
         <div className="glass-panel p-5 rounded-2xl border border-wedding-gold/20">
           <form onSubmit={handleSearch} className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 w-4 h-4 text-wedding-gold/60" />
-              <input
-                type="text"
-                placeholder="Search by serial number or name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-wedding-darkCard border border-wedding-gold/20 rounded-xl pl-9 pr-4 py-2.5 text-xs text-wedding-beige focus:outline-none focus:border-wedding-gold"
-              />
+            <div className="relative flex-1 flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-3 w-4 h-4 text-wedding-gold/60" />
+                <input
+                  type="text"
+                  placeholder="Search by serial number or name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-wedding-darkCard border border-wedding-gold/20 rounded-xl pl-9 pr-4 py-2.5 text-xs text-wedding-beige focus:outline-none focus:border-wedding-gold"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setQrScannerActive(true)}
+                className="px-3.5 py-2.5 bg-wedding-darkCard border border-wedding-gold/20 hover:border-wedding-gold text-wedding-gold rounded-xl transition flex items-center justify-center shrink-0 cursor-pointer"
+                title="Scan QR Code"
+              >
+                <QrCode className="w-5 h-5" />
+              </button>
             </div>
             <button
               type="submit"
               disabled={searching}
-              className="px-6 py-2.5 bg-wedding-wine text-wedding-beige hover:bg-wedding-wineDark transition font-playfair text-xs tracking-wider rounded-xl border border-wedding-gold/20"
+              className="px-6 py-2.5 bg-wedding-wine text-wedding-beige hover:bg-wedding-wineDark transition font-playfair text-xs tracking-wider rounded-xl border border-wedding-gold/20 cursor-pointer"
             >
               {searching ? 'SEARCHING...' : 'SEARCH'}
             </button>
@@ -278,8 +360,18 @@ export default function CheckinDashboard() {
                     </div>
                     <div>
                       <span className="text-wedding-beige/50 block">Status:</span>
-                      <span className={`font-semibold ${rsvp.checkedIn ? 'text-wedding-emeraldLight' : 'text-wedding-wine'}`}>
-                        {rsvp.checkedIn ? 'Checked In' : 'Pending Entry'}
+                      <span className={`font-semibold ${
+                        rsvp.checkedIn 
+                          ? 'text-wedding-emeraldLight' 
+                          : rsvp.checkedOut 
+                            ? 'text-wedding-wineLight' 
+                            : 'text-amber-600'
+                      }`}>
+                        {rsvp.checkedIn 
+                          ? 'Checked In' 
+                          : rsvp.checkedOut 
+                            ? 'Checked Out' 
+                            : 'Pending Entry'}
                       </span>
                     </div>
                   </div>
@@ -305,24 +397,44 @@ export default function CheckinDashboard() {
                       <span className="text-[10px] text-wedding-beige/50 block">
                         At: {rsvp.checkedInAt ? new Date(rsvp.checkedInAt).toLocaleTimeString() : ''}
                       </span>
-                      {rsvp.checkInPhoto && (
-                        <a 
-                          href={rsvp.checkInPhoto.startsWith('/uploads') ? `http://localhost:5000${rsvp.checkInPhoto}` : rsvp.checkInPhoto} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="inline-block text-[10px] text-wedding-gold border border-wedding-gold/20 px-2 py-1 rounded bg-wedding-darkCard/40 hover:bg-wedding-wine/20"
+                      <div className="flex gap-2 flex-wrap items-center mt-1">
+                        {rsvp.checkInPhoto && (
+                          <a 
+                            href={rsvp.checkInPhoto.startsWith('/uploads') ? `http://localhost:5000${rsvp.checkInPhoto}` : rsvp.checkInPhoto} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="inline-block text-[10px] text-wedding-gold border border-wedding-gold/20 px-2 py-1 rounded bg-wedding-darkCard/40 hover:bg-wedding-wine/20"
+                          >
+                            View Entry Photo
+                          </a>
+                        )}
+                        <button
+                          onClick={() => handleCheckout(rsvp)}
+                          className="px-3 py-1.5 bg-wedding-wine hover:bg-wedding-wineDark text-wedding-lightBeige hover:text-white font-playfair text-[10px] tracking-wider rounded-lg border border-wedding-gold/20 flex items-center gap-1 transition cursor-pointer"
                         >
-                          View Entry Photo
-                        </a>
-                      )}
+                          <LogOut className="w-3 h-3" /> CHECK OUT
+                        </button>
+                      </div>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => setActiveCheckinRsvp(rsvp)}
-                      className="px-6 py-3 bg-[#133015] hover:bg-wedding-emeraldDark text-wedding-beige font-playfair text-xs tracking-wider rounded-xl border border-wedding-gold/25 hover:border-wedding-gold flex items-center gap-1.5 transition"
-                    >
-                      <UserCheck className="w-4 h-4 text-wedding-gold" /> APPROVE ENTRY
-                    </button>
+                    <div className="text-left md:text-right space-y-2">
+                      {rsvp.checkedOut && (
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5 text-wedding-wineLight text-xs font-semibold justify-start md:justify-end">
+                            <ShieldAlert className="w-4 h-4" /> Checked Out
+                          </div>
+                          <span className="text-[10px] text-wedding-beige/50 block">
+                            At: {rsvp.checkedOutAt ? new Date(rsvp.checkedOutAt).toLocaleTimeString() : ''}
+                          </span>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => setActiveCheckinRsvp(rsvp)}
+                        className="px-6 py-3 bg-[#133015] hover:bg-wedding-emeraldDark text-wedding-beige font-playfair text-xs tracking-wider rounded-xl border border-wedding-gold/25 hover:border-wedding-gold flex items-center gap-1.5 transition cursor-pointer"
+                      >
+                        <UserCheck className="w-4 h-4 text-wedding-gold" /> {rsvp.checkedOut ? 'APPROVE RE-ENTRY' : 'APPROVE ENTRY'}
+                      </button>
+                    </div>
                   )}
                 </div>
 
@@ -346,7 +458,7 @@ export default function CheckinDashboard() {
               </div>
               <button 
                 onClick={closeCheckinModal}
-                className="p-1 text-wedding-beige/70 hover:text-wedding-beige border border-wedding-gold/15 rounded-lg hover:bg-wedding-wine/25 transition"
+                className="p-1 text-wedding-beige/70 hover:text-wedding-beige border border-wedding-gold/15 rounded-lg hover:bg-wedding-wine/25 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -410,14 +522,14 @@ export default function CheckinDashboard() {
                 {cameraActive ? (
                   <button
                     onClick={capturePhoto}
-                    className="px-6 py-2.5 bg-wedding-wine text-wedding-beige font-playfair text-xs tracking-wider rounded-lg border border-wedding-gold/20 flex items-center gap-1.5"
+                    className="px-6 py-2.5 bg-wedding-wine text-wedding-beige font-playfair text-xs tracking-wider rounded-lg border border-wedding-gold/20 flex items-center gap-1.5 cursor-pointer"
                   >
                     <Camera className="w-4 h-4" /> SNAP & PREVIEW
                   </button>
                 ) : (
                   <button
                     onClick={startCamera}
-                    className="px-6 py-2.5 bg-wedding-darkCard border border-wedding-gold/30 text-wedding-gold hover:border-wedding-gold font-playfair text-xs tracking-wider rounded-lg flex items-center gap-1.5"
+                    className="px-6 py-2.5 bg-wedding-darkCard border border-wedding-gold/30 text-wedding-gold hover:border-wedding-gold font-playfair text-xs tracking-wider rounded-lg flex items-center gap-1.5 cursor-pointer"
                   >
                     <RefreshCcw className="w-4 h-4" /> {capturedUrl || fileUrl ? 'RE-TAKE PHOTO' : 'START CAMERA'}
                   </button>
@@ -441,10 +553,14 @@ export default function CheckinDashboard() {
               {/* Complete Checkin CTA */}
               <button
                 onClick={submitCheckin}
-                disabled={checkinLoading || (!capturedBlob && !fileFallback)}
-                className="w-full py-4 bg-[#133015] hover:bg-wedding-emeraldDark text-wedding-beige font-playfair tracking-widest text-xs rounded-xl border border-wedding-gold/20 hover:border-wedding-gold flex items-center justify-center gap-2 mt-4 disabled:opacity-40 transition"
+                disabled={checkinLoading}
+                className="w-full py-4 bg-[#133015] hover:bg-wedding-emeraldDark text-wedding-beige font-playfair tracking-widest text-xs rounded-xl border border-wedding-gold/20 hover:border-wedding-gold flex items-center justify-center gap-2 mt-4 disabled:opacity-40 transition cursor-pointer"
               >
-                {checkinLoading ? 'UPLOADING & REGISTERING...' : 'COMPLETE ENTRY CHECK-IN'}
+                {checkinLoading 
+                  ? 'UPLOADING & REGISTERING...' 
+                  : (capturedBlob || fileFallback) 
+                    ? 'COMPLETE ENTRY CHECK-IN' 
+                    : 'CHECK IN WITHOUT PHOTO'}
               </button>
             </div>
 
@@ -452,6 +568,45 @@ export default function CheckinDashboard() {
         </div>
       )}
 
+      {/* QR CODE SCANNER MODAL */}
+      {qrScannerActive && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-wedding-darkCard border border-wedding-gold/20 rounded-3xl p-6 relative flex flex-col gap-5 overflow-hidden">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-2 border-b border-wedding-gold/10">
+              <div>
+                <h3 className="font-playfair text-wedding-gold text-sm tracking-widest uppercase">Scan Entry QR Code</h3>
+                <p className="text-[11px] text-wedding-beige/60 mt-0.5">Point camera at the guest's QR code</p>
+              </div>
+              <button 
+                onClick={() => setQrScannerActive(false)}
+                className="p-1 text-wedding-beige/70 hover:text-wedding-beige border border-wedding-gold/15 rounded-lg hover:bg-wedding-wine/25 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Scanner Viewport */}
+            <div className="relative aspect-square rounded-2xl overflow-hidden bg-black border border-wedding-gold/10 flex items-center justify-center">
+              <div id="qr-reader" className="w-full h-full object-cover"></div>
+            </div>
+
+            {qrScannerError && (
+              <p className="text-xs text-wedding-gold bg-wedding-wine/10 border border-wedding-gold/10 p-2.5 rounded-lg text-center leading-normal">
+                {qrScannerError}
+              </p>
+            )}
+
+            <button
+              onClick={() => setQrScannerActive(false)}
+              className="w-full py-3.5 bg-wedding-wine text-wedding-beige font-playfair tracking-widest text-xs rounded-xl border border-wedding-gold/20 transition cursor-pointer"
+            >
+              CANCEL
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
