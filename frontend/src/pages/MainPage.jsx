@@ -36,7 +36,12 @@ export default function MainPage() {
   // Countdown State
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
-  const API_URL = 'http://localhost:5000/api';
+  // Couple photo carousel
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const couplePhotos = ['/img1.jpg', '/img2.jpg', '/img3.jpg'];
+
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
   // React Hook Form for RSVP
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
@@ -98,6 +103,14 @@ export default function MainPage() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Carousel auto-advance every 4 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCarouselIndex(i => (i + 1) % couplePhotos.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [couplePhotos.length]);
 
   // Handle number of guests change in RSVP form
   const handleGuestCountChange = (count) => {
@@ -337,6 +350,69 @@ export default function MainPage() {
             </a>
           </motion.div>
         </div>
+      </section>
+
+      {/* ── COUPLE PHOTO CAROUSEL ── */}
+      <section className="w-full overflow-hidden" aria-label="Couple Photos Carousel">
+        <div className="relative w-full" style={{ height: 'clamp(350px, 55vw, 560px)' }}>
+          {couplePhotos.map((src, idx) => (
+            <motion.div
+              key={src}
+              className="absolute inset-0"
+              initial={{ opacity: 0, scale: 1.04 }}
+              animate={{
+                opacity: idx === carouselIndex ? 1 : 0,
+                scale: idx === carouselIndex ? 1 : 1.04,
+              }}
+              transition={{ duration: 1.1, ease: 'easeInOut' }}
+              style={{ pointerEvents: idx === carouselIndex ? 'auto' : 'none' }}
+            >
+              <img
+                src={src}
+                alt={`Couple photo ${idx + 1}`}
+                className="w-full h-full object-cover object-center"
+                loading="lazy"
+              />
+              {/* Subtle vignette overlay */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/40" />
+            </motion.div>
+          ))}
+
+          {/* Dot indicators */}
+          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2.5 z-10">
+            {couplePhotos.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCarouselIndex(idx)}
+                aria-label={`Go to photo ${idx + 1}`}
+                className={`rounded-full border border-wedding-gold/60 transition-all duration-500 ${
+                  idx === carouselIndex
+                    ? 'w-6 h-2.5 bg-wedding-gold shadow-[0_0_8px_rgba(212,175,55,0.7)]'
+                    : 'w-2.5 h-2.5 bg-white/30 hover:bg-white/60'
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Prev / Next arrows */}
+          <button
+            onClick={() => setCarouselIndex(i => (i - 1 + couplePhotos.length) % couplePhotos.length)}
+            aria-label="Previous photo"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/30 border border-wedding-gold/30 text-wedding-gold hover:bg-wedding-wine/60 hover:border-wedding-gold transition-all duration-300 text-lg"
+          >
+            ‹
+          </button>
+          <button
+            onClick={() => setCarouselIndex(i => (i + 1) % couplePhotos.length)}
+            aria-label="Next photo"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/30 border border-wedding-gold/30 text-wedding-gold hover:bg-wedding-wine/60 hover:border-wedding-gold transition-all duration-300 text-lg"
+          >
+            ›
+          </button>
+        </div>
+
+        {/* Gold divider below carousel */}
+        <div className="w-full h-[2px] bg-gradient-to-r from-transparent via-wedding-gold/40 to-transparent" />
       </section>
 
       {/* 2. LOVE STORY SECTION */}
@@ -789,7 +865,7 @@ export default function MainPage() {
               {photos.map((photo) => (
                 <div key={photo.id} className="group relative overflow-hidden rounded-xl border border-wedding-gold/10 aspect-square bg-wedding-darkCard/40">
                   <img 
-                    src={photo.imageUrl.startsWith('/uploads') ? `http://localhost:5000${photo.imageUrl}` : photo.imageUrl} 
+                    src={photo.imageUrl.startsWith('/uploads') ? `${BACKEND_URL}${photo.imageUrl}` : photo.imageUrl} 
                     alt="Wedding moment" 
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />

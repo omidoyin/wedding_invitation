@@ -23,7 +23,8 @@ export default function AdminDashboard() {
   
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'invites', 'gallery', 'donations'
 
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
   const token = localStorage.getItem('admin_token');
 
   useEffect(() => {
@@ -136,7 +137,7 @@ export default function AdminDashboard() {
 
   if (loading && !stats) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-wedding-darkBg">
+      <div className="flex flex-col items-center justify-center min-h-screen" style={{background:'#150709'}}>
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-wedding-gold"></div>
         <p className="font-playfair text-sm text-wedding-gold mt-4">Loading Dashboard...</p>
       </div>
@@ -144,13 +145,13 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-wedding-darkBg text-wedding-beige p-6 font-poppins selection:bg-wedding-wine selection:text-wedding-gold">
+    <div className="min-h-screen text-[#FAF8F5] p-6 font-poppins selection:bg-wedding-wine selection:text-wedding-gold" style={{background: '#150709'}}>
       
       {/* Header */}
-      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between border-b border-wedding-gold/15 pb-6 mb-8 gap-4">
+      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between border-b border-wedding-gold/20 pb-6 mb-8 gap-4">
         <div>
           <h2 className="text-wedding-gold font-playfair text-xs tracking-[0.2em] uppercase">Control Center</h2>
-          <h1 className="font-playfair text-2xl text-gold-gradient tracking-widest uppercase font-bold flex items-center gap-2">
+          <h1 className="font-playfair text-2xl text-[#E5C04A] tracking-widest uppercase font-bold flex items-center gap-2">
             AALOVESTORY2026 Admin
           </h1>
         </div>
@@ -158,20 +159,20 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-3">
           <button
             onClick={loadDashboardData}
-            className="p-2 border border-wedding-gold/20 rounded-xl bg-wedding-darkCard/40 text-wedding-gold hover:bg-wedding-wine/20 transition"
+            className="p-2 border border-wedding-gold/20 rounded-xl bg-black/30 text-wedding-gold hover:bg-wedding-wine/20 transition"
             title="Refresh Data"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
           <button
             onClick={handleExportData}
-            className="flex items-center gap-2 text-wedding-beige hover:bg-wedding-wine/20 font-playfair text-xs tracking-wider border border-wedding-gold/20 px-4 py-2 rounded-xl bg-wedding-darkCard/40 transition"
+            className="flex items-center gap-2 text-[#FAF8F5] hover:bg-wedding-wine/20 font-playfair text-xs tracking-wider border border-wedding-gold/20 px-4 py-2 rounded-xl bg-black/30 transition"
           >
             <Download className="w-4 h-4" /> EXPORT EXCEL
           </button>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 text-wedding-wine hover:bg-wedding-wineDark hover:text-wedding-beige font-playfair text-xs tracking-wider border border-wedding-wine/45 px-4 py-2 rounded-xl bg-wedding-darkCard/40 transition"
+            className="flex items-center gap-2 text-wedding-wine hover:bg-wedding-wineDark hover:text-wedding-beige font-playfair text-xs tracking-wider border border-wedding-wine/45 px-4 py-2 rounded-xl bg-black/30 transition"
           >
             <LogOut className="w-4 h-4" /> LOG OUT
           </button>
@@ -179,15 +180,15 @@ export default function AdminDashboard() {
       </div>
 
       {/* Tabs Selector */}
-      <div className="max-w-6xl mx-auto flex border-b border-wedding-gold/10 mb-8 overflow-x-auto gap-2">
+      <div className="max-w-6xl mx-auto flex border-b border-wedding-gold/15 mb-8 overflow-x-auto gap-2">
         {['overview', 'invites', 'gallery', 'donations'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`py-3 px-6 font-playfair text-sm tracking-wider uppercase border-b-2 transition-all ${
               activeTab === tab 
-                ? 'border-wedding-gold text-wedding-gold font-bold' 
-                : 'border-transparent text-wedding-beige/60 hover:text-wedding-beige'
+                ? 'border-wedding-gold text-[#E5C04A] font-bold' 
+                : 'border-transparent text-[#FAF8F5]/50 hover:text-[#FAF8F5]'
             }`}
           >
             {tab}
@@ -204,39 +205,39 @@ export default function AdminDashboard() {
             
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="glass-panel p-6 rounded-2xl border border-wedding-gold/15 flex items-center gap-4">
-                <Users className="w-8 h-8 text-wedding-gold" />
+              <div className="p-6 rounded-2xl border border-wedding-gold/20 flex items-center gap-4" style={{background:'rgba(255,255,255,0.05)'}}>
+                <Users className="w-8 h-8 text-[#E5C04A]" />
                 <div>
-                  <span className="text-[10px] text-wedding-beige/60 uppercase tracking-wider block">Total Invites</span>
-                  <span className="text-xl font-bold text-wedding-beige">{stats?.totalInvites}</span>
+                  <span className="text-[10px] text-[#FAF8F5]/60 uppercase tracking-wider block">Total Invites</span>
+                  <span className="text-xl font-bold text-[#FAF8F5]">{stats?.totalInvites}</span>
                 </div>
               </div>
 
-              <div className="glass-panel p-6 rounded-2xl border border-wedding-gold/15 flex items-center gap-4">
-                <CheckSquare className="w-8 h-8 text-wedding-gold" />
+              <div className="p-6 rounded-2xl border border-wedding-gold/20 flex items-center gap-4" style={{background:'rgba(255,255,255,0.05)'}}>
+                <CheckSquare className="w-8 h-8 text-[#E5C04A]" />
                 <div>
-                  <span className="text-[10px] text-wedding-beige/60 uppercase tracking-wider block">RSVPs Submitted</span>
-                  <span className="text-xl font-bold text-wedding-beige">
-                    {stats?.totalRSVPs} <span className="text-xs text-gray-500">({stats?.totalInvites ? Math.round((stats.totalRSVPs / stats.totalInvites) * 100) : 0}%)</span>
+                  <span className="text-[10px] text-[#FAF8F5]/60 uppercase tracking-wider block">RSVPs Submitted</span>
+                  <span className="text-xl font-bold text-[#FAF8F5]">
+                    {stats?.totalRSVPs} <span className="text-xs text-[#FAF8F5]/50">({stats?.totalInvites ? Math.round((stats.totalRSVPs / stats.totalInvites) * 100) : 0}%)</span>
                   </span>
                 </div>
               </div>
 
-              <div className="glass-panel p-6 rounded-2xl border border-wedding-gold/15 flex items-center gap-4">
-                <ShieldCheck className="w-8 h-8 text-wedding-gold" />
+              <div className="p-6 rounded-2xl border border-wedding-gold/20 flex items-center gap-4" style={{background:'rgba(255,255,255,0.05)'}}>
+                <ShieldCheck className="w-8 h-8 text-[#E5C04A]" />
                 <div>
-                  <span className="text-[10px] text-wedding-beige/60 uppercase tracking-wider block">Guests Checked In</span>
-                  <span className="text-xl font-bold text-wedding-beige">
-                    {stats?.checkedInAttendees} <span className="text-xs text-gray-500">/ {stats?.totalExpectedGuests} expected</span>
+                  <span className="text-[10px] text-[#FAF8F5]/60 uppercase tracking-wider block">Guests Checked In</span>
+                  <span className="text-xl font-bold text-[#FAF8F5]">
+                    {stats?.checkedInAttendees} <span className="text-xs text-[#FAF8F5]/50">/ {stats?.totalExpectedGuests} expected</span>
                   </span>
                 </div>
               </div>
 
-              <div className="glass-panel p-6 rounded-2xl border border-wedding-gold/15 flex items-center gap-4">
-                <DollarSign className="w-8 h-8 text-wedding-gold" />
+              <div className="p-6 rounded-2xl border border-wedding-gold/20 flex items-center gap-4" style={{background:'rgba(255,255,255,0.05)'}}>
+                <DollarSign className="w-8 h-8 text-[#E5C04A]" />
                 <div>
-                  <span className="text-[10px] text-wedding-beige/60 uppercase tracking-wider block">Total Donations</span>
-                  <span className="text-xl font-bold text-wedding-beige">₦{stats?.totalDonations.toLocaleString()}</span>
+                  <span className="text-[10px] text-[#FAF8F5]/60 uppercase tracking-wider block">Total Donations</span>
+                  <span className="text-xl font-bold text-[#FAF8F5]">₦{stats?.totalDonations.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -245,31 +246,31 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
               
               {/* Form: Generate Invite */}
-              <div className="glass-panel p-6 rounded-3xl border border-wedding-gold/20">
-                <h3 className="font-playfair text-lg text-wedding-gold mb-4 flex items-center gap-2">
+              <div className="p-6 rounded-3xl border border-wedding-gold/20" style={{background:'rgba(255,255,255,0.05)'}}>
+                <h3 className="font-playfair text-lg text-[#E5C04A] mb-4 flex items-center gap-2">
                   <Plus className="w-5 h-5 text-wedding-gold" /> Generate Invitation Link
                 </h3>
                 
                 <form onSubmit={handleCreateInvite} className="space-y-4">
                   <div className="space-y-1">
-                    <label className="text-xs text-wedding-beige/70">Family or Group Name</label>
+                    <label className="text-xs text-[#FAF8F5]/70">Family or Group Name</label>
                     <input
                       type="text"
                       placeholder="E.g., Adebayo Family"
                       value={familyName}
                       onChange={(e) => setFamilyName(e.target.value)}
                       required
-                      className="w-full bg-wedding-darkCard border border-wedding-gold/20 rounded-xl px-4 py-3 text-xs text-wedding-beige focus:outline-none focus:border-wedding-gold"
+                      className="w-full bg-[#1F0C0F] border border-wedding-gold/20 rounded-xl px-4 py-3 text-xs text-[#FAF8F5] focus:outline-none focus:border-wedding-gold"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-xs text-wedding-beige/70">Category</label>
+                      <label className="text-xs text-[#FAF8F5]/70">Category</label>
                       <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="w-full bg-wedding-darkCard border border-wedding-gold/20 rounded-xl px-4 py-3 text-xs text-wedding-beige focus:outline-none focus:border-wedding-gold"
+                        className="w-full bg-[#1F0C0F] border border-wedding-gold/20 rounded-xl px-4 py-3 text-xs text-[#FAF8F5] focus:outline-none focus:border-wedding-gold"
                       >
                         <option value="Family">Family</option>
                         <option value="Friend">Friend</option>
@@ -279,7 +280,7 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-xs text-wedding-beige/70">Max Guest Count</label>
+                      <label className="text-xs text-[#FAF8F5]/70">Max Guest Count</label>
                       <input
                         type="number"
                         min="1"
@@ -287,7 +288,7 @@ export default function AdminDashboard() {
                         value={maxGuests}
                         onChange={(e) => setMaxGuests(parseInt(e.target.value))}
                         required
-                        className="w-full bg-wedding-darkCard border border-wedding-gold/20 rounded-xl px-4 py-3 text-xs text-wedding-beige focus:outline-none focus:border-wedding-gold"
+                        className="w-full bg-[#1F0C0F] border border-wedding-gold/20 rounded-xl px-4 py-3 text-xs text-[#FAF8F5] focus:outline-none focus:border-wedding-gold"
                       />
                     </div>
                   </div>
@@ -308,19 +309,19 @@ export default function AdminDashboard() {
               </div>
 
               {/* Photo Approval Quick Section */}
-              <div className="glass-panel p-6 rounded-3xl border border-wedding-gold/20">
-                <h3 className="font-playfair text-lg text-wedding-gold mb-4 flex items-center gap-2">
+              <div className="p-6 rounded-3xl border border-wedding-gold/20" style={{background:'rgba(255,255,255,0.05)'}}>
+                <h3 className="font-playfair text-lg text-[#E5C04A] mb-4 flex items-center gap-2">
                   <Image className="w-5 h-5 text-wedding-gold" /> Gallery Approvals ({pendingPhotos.length})
                 </h3>
 
                 {pendingPhotos.length === 0 ? (
-                  <p className="text-xs text-wedding-beige/50 italic text-center py-10">No pending photos for moderation.</p>
+                  <p className="text-xs text-[#FAF8F5]/50 italic text-center py-10">No pending photos for moderation.</p>
                 ) : (
                   <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
                     {pendingPhotos.map((photo) => (
                       <div key={photo.id} className="flex items-center justify-between p-3 bg-wedding-darkCard/40 border border-wedding-gold/10 rounded-xl gap-4">
                         <img 
-                          src={photo.imageUrl.startsWith('/uploads') ? `http://localhost:5000${photo.imageUrl}` : photo.imageUrl} 
+                          src={photo.imageUrl.startsWith('/uploads') ? `${BACKEND_URL}${photo.imageUrl}` : photo.imageUrl} 
                           alt="Pending upload" 
                           className="w-12 h-12 object-cover rounded-lg shrink-0"
                         />
@@ -356,13 +357,13 @@ export default function AdminDashboard() {
 
         {/* TAB 2: INVITES LIST */}
         {activeTab === 'invites' && (
-          <div className="glass-panel p-6 rounded-3xl border border-wedding-gold/20 overflow-hidden">
-            <h3 className="font-playfair text-lg text-wedding-gold mb-4">Guest Invitations List ({invites.length})</h3>
+          <div className="p-6 rounded-3xl border border-wedding-gold/20 overflow-hidden" style={{background:'rgba(255,255,255,0.05)'}}>
+            <h3 className="font-playfair text-lg text-[#E5C04A] mb-4">Guest Invitations List ({invites.length})</h3>
             
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-wedding-gold/20 text-wedding-gold font-playfair uppercase tracking-wider">
+                  <tr className="border-b border-wedding-gold/20 text-[#E5C04A] font-playfair uppercase tracking-wider">
                     <th className="pb-3 pr-4">Family Name</th>
                     <th className="pb-3 pr-4">Category</th>
                     <th className="pb-3 pr-4">Max Guests</th>
@@ -373,10 +374,10 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="divide-y divide-wedding-gold/10">
                   {invites.map((invite) => (
-                    <tr key={invite.id} className="hover:bg-wedding-darkCard/20">
-                      <td className="py-3.5 pr-4 font-semibold text-wedding-beige">{invite.familyName}</td>
-                      <td className="py-3.5 pr-4 text-wedding-beige/80">{invite.category}</td>
-                      <td className="py-3.5 pr-4 text-wedding-beige/80">{invite.maxGuests}</td>
+                    <tr key={invite.id} className="hover:bg-white/5">
+                      <td className="py-3.5 pr-4 font-semibold text-[#FAF8F5]">{invite.familyName}</td>
+                      <td className="py-3.5 pr-4 text-[#FAF8F5]/80">{invite.category}</td>
+                      <td className="py-3.5 pr-4 text-[#FAF8F5]/80">{invite.maxGuests}</td>
                       <td className="py-3.5 pr-4">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] ${
                           invite.rsvpSubmitted 
@@ -386,7 +387,7 @@ export default function AdminDashboard() {
                           {invite.rsvpSubmitted ? 'RSVP\'d' : 'Pending'}
                         </span>
                       </td>
-                      <td className="py-3.5 pr-4 select-all font-mono text-wedding-gold">
+                      <td className="py-3.5 pr-4 select-all font-mono text-[#E5C04A]">
                         invite/{invite.inviteToken}
                       </td>
                       <td className="py-3.5 font-semibold">
@@ -408,26 +409,26 @@ export default function AdminDashboard() {
 
         {/* TAB 3: GALLERY MODERATION */}
         {activeTab === 'gallery' && (
-          <div className="glass-panel p-6 rounded-3xl border border-wedding-gold/20">
-            <h3 className="font-playfair text-lg text-wedding-gold mb-6">Gallery Photos Moderation ({pendingPhotos.length} pending)</h3>
+          <div className="p-6 rounded-3xl border border-wedding-gold/20" style={{background:'rgba(255,255,255,0.05)'}}>
+            <h3 className="font-playfair text-lg text-[#E5C04A] mb-6">Gallery Photos Moderation ({pendingPhotos.length} pending)</h3>
             
             {pendingPhotos.length === 0 ? (
               <div className="text-center py-20">
                 <Image className="w-12 h-12 text-wedding-gold/20 mx-auto mb-2" />
-                <p className="text-sm text-wedding-beige/50 italic">All photo uploads have been moderated.</p>
+                <p className="text-sm text-[#FAF8F5]/50 italic">All photo uploads have been moderated.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 {pendingPhotos.map((photo) => (
                   <div key={photo.id} className="border border-wedding-gold/15 bg-wedding-darkCard/40 rounded-2xl overflow-hidden p-4 flex flex-col justify-between">
                     <img 
-                      src={photo.imageUrl.startsWith('/uploads') ? `http://localhost:5000${photo.imageUrl}` : photo.imageUrl} 
+                      src={photo.imageUrl.startsWith('/uploads') ? `${BACKEND_URL}${photo.imageUrl}` : photo.imageUrl} 
                       alt="Pending approval" 
                       className="w-full aspect-square object-cover rounded-xl mb-4 border border-wedding-gold/10"
                     />
                     <div>
-                      <span className="text-[10px] text-wedding-gold uppercase tracking-wider block font-semibold">Uploaded By:</span>
-                      <span className="text-xs text-wedding-beige block mb-4">{photo.uploadedBy}</span>
+                      <span className="text-[10px] text-[#E5C04A] uppercase tracking-wider block font-semibold">Uploaded By:</span>
+                      <span className="text-xs text-[#FAF8F5] block mb-4">{photo.uploadedBy}</span>
                       
                       <div className="grid grid-cols-2 gap-3">
                         <button
@@ -453,13 +454,13 @@ export default function AdminDashboard() {
 
         {/* TAB 4: DONATIONS */}
         {activeTab === 'donations' && (
-          <div className="glass-panel p-6 rounded-3xl border border-wedding-gold/20">
-            <h3 className="font-playfair text-lg text-wedding-gold mb-4">Financial Support History ({donations.length})</h3>
+          <div className="p-6 rounded-3xl border border-wedding-gold/20" style={{background:'rgba(255,255,255,0.05)'}}>
+            <h3 className="font-playfair text-lg text-[#E5C04A] mb-4">Financial Support History ({donations.length})</h3>
             
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-wedding-gold/20 text-wedding-gold font-playfair uppercase tracking-wider">
+                  <tr className="border-b border-wedding-gold/20 text-[#E5C04A] font-playfair uppercase tracking-wider">
                     <th className="pb-3 pr-4">Donor Name</th>
                     <th className="pb-3 pr-4">Amount (NGN)</th>
                     <th className="pb-3 pr-4">Payment Reference</th>
@@ -469,16 +470,16 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="divide-y divide-wedding-gold/10">
                   {donations.map((donation) => (
-                    <tr key={donation.id} className="hover:bg-wedding-darkCard/20">
-                      <td className="py-3.5 pr-4 font-semibold text-wedding-beige">{donation.donorName || 'Anonymous'}</td>
-                      <td className="py-3.5 pr-4 text-wedding-gold font-bold">₦{donation.amount.toLocaleString()}</td>
-                      <td className="py-3.5 pr-4 font-mono text-wedding-beige/70">{donation.reference}</td>
+                    <tr key={donation.id} className="hover:bg-white/5">
+                      <td className="py-3.5 pr-4 font-semibold text-[#FAF8F5]">{donation.donorName || 'Anonymous'}</td>
+                      <td className="py-3.5 pr-4 text-[#E5C04A] font-bold">₦{donation.amount.toLocaleString()}</td>
+                      <td className="py-3.5 pr-4 font-mono text-[#FAF8F5]/70">{donation.reference}</td>
                       <td className="py-3.5 pr-4">
                         <span className="px-2 py-0.5 rounded-full text-[10px] bg-wedding-emerald/20 text-wedding-emeraldLight border border-wedding-emerald/30">
                           {donation.status}
                         </span>
                       </td>
-                      <td className="py-3.5 text-wedding-beige/80">
+                      <td className="py-3.5 text-[#FAF8F5]/80">
                         {donation.createdAt ? new Date(donation.createdAt).toLocaleString() : ''}
                       </td>
                     </tr>

@@ -12,7 +12,8 @@ export default function GalleryPage() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadMsg, setUploadMsg] = useState('');
 
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
   async function fetchPhotos() {
     try {
@@ -148,7 +149,7 @@ export default function GalleryPage() {
               {photos.map((photo) => (
                 <div key={photo.id} className="relative group overflow-hidden rounded-xl border border-wedding-gold/10 break-inside-avoid bg-wedding-darkCard/40 shadow-md">
                   <img 
-                    src={photo.imageUrl.startsWith('/uploads') ? `http://localhost:5000${photo.imageUrl}` : photo.imageUrl} 
+                    src={photo.imageUrl.startsWith('/uploads') ? `${BACKEND_URL}${photo.imageUrl}` : photo.imageUrl} 
                     alt="Wedding moment" 
                     className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"

@@ -34,7 +34,8 @@ export default function CheckinDashboard() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
   const token = localStorage.getItem('admin_token');
 
   useEffect(() => {
@@ -270,20 +271,20 @@ export default function CheckinDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-wedding-darkBg text-wedding-beige p-4 font-poppins selection:bg-wedding-wine selection:text-wedding-gold">
+    <div className="min-h-screen text-[#FAF8F5] p-4 font-poppins selection:bg-wedding-wine selection:text-wedding-gold" style={{background: '#150709'}}>
       
       {/* Header */}
       <div className="max-w-4xl mx-auto flex items-center justify-between border-b border-wedding-gold/15 pb-4 mb-6">
         <div>
           <h2 className="text-wedding-gold font-playfair text-[10px] tracking-[0.2em] uppercase">Staff Access</h2>
-          <h1 className="font-playfair text-lg text-gold-gradient tracking-widest uppercase font-bold flex items-center gap-1.5">
+          <h1 className="font-playfair text-lg text-[#E5C04A] tracking-widest uppercase font-bold flex items-center gap-1.5">
             Bouncer Check-In
           </h1>
         </div>
 
         <button
           onClick={handleLogout}
-          className="flex items-center gap-1.5 text-wedding-wine hover:bg-wedding-wine/25 border border-wedding-wine/40 px-3 py-1.5 rounded-lg bg-wedding-darkCard/40 transition text-xs font-playfair tracking-wider"
+          className="flex items-center gap-1.5 text-wedding-wine hover:bg-wedding-wine/25 border border-wedding-wine/40 px-3 py-1.5 rounded-lg bg-black/30 transition text-xs font-playfair tracking-wider"
         >
           <LogOut className="w-3.5 h-3.5" /> LOG OUT
         </button>
@@ -292,7 +293,7 @@ export default function CheckinDashboard() {
       <div className="max-w-4xl mx-auto space-y-6">
         
         {/* Search Bar */}
-        <div className="glass-panel p-5 rounded-2xl border border-wedding-gold/20">
+        <div className="p-5 rounded-2xl border border-wedding-gold/20" style={{background:'rgba(255,255,255,0.05)'}}>
           <form onSubmit={handleSearch} className="flex gap-2">
             <div className="relative flex-1 flex gap-2">
               <div className="relative flex-1">
@@ -302,7 +303,7 @@ export default function CheckinDashboard() {
                   placeholder="Search by serial number or name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-wedding-darkCard border border-wedding-gold/20 rounded-xl pl-9 pr-4 py-2.5 text-xs text-wedding-beige focus:outline-none focus:border-wedding-gold"
+                  className="w-full bg-[#150709] border border-wedding-gold/20 rounded-xl pl-9 pr-4 py-2.5 text-xs text-[#FAF8F5] focus:outline-none focus:border-wedding-gold"
                 />
               </div>
               <button
@@ -335,17 +336,17 @@ export default function CheckinDashboard() {
         {/* Search Results */}
         {searchResults.length > 0 && (
           <div className="space-y-4">
-            <p className="text-xs text-wedding-gold font-semibold uppercase tracking-wider pl-1">Found ({searchResults.length}) RSVPs</p>
+            <p className="text-xs text-[#E5C04A] font-semibold uppercase tracking-wider pl-1">Found ({searchResults.length}) RSVPs</p>
             
             {searchResults.map((rsvp) => (
               <div 
                 key={rsvp.id} 
-                className="glass-panel p-6 rounded-2xl border border-wedding-gold/15 flex flex-col md:flex-row md:items-center justify-between gap-6"
+                className="p-6 rounded-2xl border border-wedding-gold/15 flex flex-col md:flex-row md:items-center justify-between gap-6" style={{background:'rgba(255,255,255,0.05)'}}
               >
                 {/* RSVP Details */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-playfair text-lg font-bold text-wedding-beige">
+                    <span className="font-playfair text-lg font-bold text-[#FAF8F5]">
                       {rsvp.invite.familyName} Family
                     </span>
                     <span className="text-[10px] bg-wedding-darkCard border border-wedding-gold/15 px-2.5 py-0.5 rounded-full font-mono text-wedding-gold uppercase">
@@ -356,7 +357,7 @@ export default function CheckinDashboard() {
                   <div className="grid grid-cols-2 gap-4 text-xs">
                     <div>
                       <span className="text-wedding-beige/50 block">Attendees Registered:</span>
-                      <span className="font-semibold">{rsvp.attendanceCount} guests</span>
+                      <span className="font-semibold text-[#FAF8F5]">{rsvp.attendanceCount} guests</span>
                     </div>
                     <div>
                       <span className="text-wedding-beige/50 block">Status:</span>
@@ -378,8 +379,8 @@ export default function CheckinDashboard() {
 
                   {/* Individual Guest Names */}
                   <div className="pt-2">
-                    <span className="text-[10px] text-wedding-gold uppercase tracking-wider block font-semibold mb-1">Attendee Names:</span>
-                    <ul className="text-xs text-wedding-beige/80 list-disc pl-4 space-y-0.5">
+                    <span className="text-[10px] text-[#E5C04A] uppercase tracking-wider block font-semibold mb-1">Attendee Names:</span>
+                    <ul className="text-xs text-[#FAF8F5]/80 list-disc pl-4 space-y-0.5">
                       {rsvp.attendees.map((att) => (
                         <li key={att.id}>{att.fullName} {att.phoneNumber ? `(${att.phoneNumber})` : ''}</li>
                       ))}
@@ -400,7 +401,7 @@ export default function CheckinDashboard() {
                       <div className="flex gap-2 flex-wrap items-center mt-1">
                         {rsvp.checkInPhoto && (
                           <a 
-                            href={rsvp.checkInPhoto.startsWith('/uploads') ? `http://localhost:5000${rsvp.checkInPhoto}` : rsvp.checkInPhoto} 
+                            href={rsvp.checkInPhoto.startsWith('/uploads') ? `${BACKEND_URL}${rsvp.checkInPhoto}` : rsvp.checkInPhoto} 
                             target="_blank" 
                             rel="noreferrer"
                             className="inline-block text-[10px] text-wedding-gold border border-wedding-gold/20 px-2 py-1 rounded bg-wedding-darkCard/40 hover:bg-wedding-wine/20"
@@ -448,17 +449,17 @@ export default function CheckinDashboard() {
       {/* CHECK-IN CAMERA MODAL */}
       {activeCheckinRsvp && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-wedding-darkCard border border-wedding-gold/20 rounded-3xl p-6 relative flex flex-col gap-5 overflow-hidden max-h-[90vh]">
+          <div className="w-full max-w-md border border-wedding-gold/20 rounded-3xl p-6 relative flex flex-col gap-5 overflow-hidden max-h-[90vh]" style={{background:'#1F0C0F'}}>
             
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-2 border-b border-wedding-gold/10">
               <div>
                 <h3 className="font-playfair text-wedding-gold text-sm tracking-widest uppercase">Verify Guest Entry</h3>
-                <p className="text-[11px] text-wedding-beige/60 truncate mt-0.5">{activeCheckinRsvp.invite.familyName} Family | {activeCheckinRsvp.serialNumber}</p>
+                <p className="text-[11px] text-[#FAF8F5]/60 truncate mt-0.5">{activeCheckinRsvp.invite.familyName} Family | {activeCheckinRsvp.serialNumber}</p>
               </div>
               <button 
                 onClick={closeCheckinModal}
-                className="p-1 text-wedding-beige/70 hover:text-wedding-beige border border-wedding-gold/15 rounded-lg hover:bg-wedding-wine/25 transition cursor-pointer"
+                className="p-1 text-[#FAF8F5]/70 hover:text-[#FAF8F5] border border-wedding-gold/15 rounded-lg hover:bg-wedding-wine/25 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -506,7 +507,7 @@ export default function CheckinDashboard() {
               {!cameraActive && !capturedUrl && !fileUrl && (
                 <div className="text-center p-4">
                   <Camera className="w-12 h-12 text-wedding-gold/30 mx-auto mb-2" />
-                  <p className="text-xs text-wedding-beige/50 italic">Camera inactive. Click "Start Camera" or select a file below.</p>
+                  <p className="text-xs text-[#FAF8F5]/50 italic">Camera inactive. Click "Start Camera" or select a file below.</p>
                 </div>
               )}
             </div>
@@ -529,7 +530,7 @@ export default function CheckinDashboard() {
                 ) : (
                   <button
                     onClick={startCamera}
-                    className="px-6 py-2.5 bg-wedding-darkCard border border-wedding-gold/30 text-wedding-gold hover:border-wedding-gold font-playfair text-xs tracking-wider rounded-lg flex items-center gap-1.5 cursor-pointer"
+                    className="px-6 py-2.5 bg-[#1F0C0F] border border-wedding-gold/30 text-[#E5C04A] hover:border-wedding-gold font-playfair text-xs tracking-wider rounded-lg flex items-center gap-1.5 cursor-pointer"
                   >
                     <RefreshCcw className="w-4 h-4" /> {capturedUrl || fileUrl ? 'RE-TAKE PHOTO' : 'START CAMERA'}
                   </button>
@@ -538,8 +539,8 @@ export default function CheckinDashboard() {
 
               {/* File Input Fallback Selector */}
               <div className="text-center">
-                <span className="text-[10px] text-wedding-beige/40 uppercase tracking-widest block mb-2">Or Use Local Image File</span>
-                <label className="inline-flex items-center gap-1.5 px-4 py-2 border border-wedding-gold/20 rounded-xl bg-wedding-darkCard/40 text-wedding-beige/85 hover:border-wedding-gold text-xs font-playfair cursor-pointer select-none transition">
+                <span className="text-[10px] text-[#FAF8F5]/40 uppercase tracking-widest block mb-2">Or Use Local Image File</span>
+                <label className="inline-flex items-center gap-1.5 px-4 py-2 border border-wedding-gold/20 rounded-xl bg-black/30 text-[#FAF8F5]/85 hover:border-wedding-gold text-xs font-playfair cursor-pointer select-none transition">
                   <FileImage className="w-3.5 h-3.5 text-wedding-gold" /> SELECT FILE
                   <input
                     type="file"
@@ -571,7 +572,7 @@ export default function CheckinDashboard() {
       {/* QR CODE SCANNER MODAL */}
       {qrScannerActive && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-wedding-darkCard border border-wedding-gold/20 rounded-3xl p-6 relative flex flex-col gap-5 overflow-hidden">
+          <div className="w-full max-w-md border border-wedding-gold/20 rounded-3xl p-6 relative flex flex-col gap-5 overflow-hidden" style={{background:'#1F0C0F'}}>
             
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-2 border-b border-wedding-gold/10">

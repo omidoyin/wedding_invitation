@@ -14,7 +14,7 @@ export default function EnvelopePage() {
   const [particles, setParticles] = useState([]);
 
   // Base API URL
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   useEffect(() => {
     // Generate floating background particles
@@ -50,6 +50,8 @@ export default function EnvelopePage() {
 
   const handleOpenEnvelope = () => {
     setIsOpen(true);
+    // Dispatch custom event to start continuous global music playback
+    window.dispatchEvent(new CustomEvent('play-wedding-music'));
   };
 
   if (loading) {

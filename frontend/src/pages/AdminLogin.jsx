@@ -10,7 +10,7 @@ export default function AdminLogin() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -58,7 +58,7 @@ export default function AdminLogin() {
       </div>
 
       {/* Login Box */}
-      <div className="w-full max-w-sm glass-panel p-8 rounded-3xl border border-wedding-gold/25 relative overflow-hidden shadow-2xl">
+      <div className="w-full max-w-sm p-8 rounded-3xl border border-wedding-gold/25 relative overflow-hidden shadow-2xl" style={{background: 'rgba(26,17,19,0.92)', backdropFilter: 'blur(12px)'}}>
         {/* Decorative corner accents */}
         <div className="absolute top-2 left-2 w-5 h-5 border-t border-l border-wedding-gold/20"></div>
         <div className="absolute top-2 right-2 w-5 h-5 border-t border-r border-wedding-gold/20"></div>
@@ -75,7 +75,7 @@ export default function AdminLogin() {
 
           {/* Username */}
           <div className="space-y-1 text-left">
-            <label className="text-xs text-wedding-gold font-bold uppercase tracking-wider block">Username</label>
+            <label className="text-xs text-[#E5C04A] font-bold uppercase tracking-wider block">Username</label>
             <div className="relative">
               <User className="absolute left-3.5 top-3.5 w-4 h-4 text-wedding-gold/60" />
               <input
@@ -90,7 +90,7 @@ export default function AdminLogin() {
 
           {/* Password */}
           <div className="space-y-1 text-left">
-            <label className="text-xs text-wedding-gold font-bold uppercase tracking-wider block">Password</label>
+            <label className="text-xs text-[#E5C04A] font-bold uppercase tracking-wider block">Password</label>
             <div className="relative">
               <Key className="absolute left-3.5 top-3.5 w-4 h-4 text-wedding-gold/60" />
               <input
@@ -114,7 +114,7 @@ export default function AdminLogin() {
         </form>
       </div>
 
-      <p className="text-[10px] text-wedding-gold/30 font-poppins mt-8 tracking-widest uppercase">
+      <p className="text-[10px] text-[#D4AF37]/60 font-poppins mt-8 tracking-widest uppercase">
         © 2026 AALOVESTORY. ALL RIGHTS RESERVED.
       </p>
     </div>

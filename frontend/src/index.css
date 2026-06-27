@@ -81,3 +81,26 @@
     opacity: 0;
   }
 }
+
+/* Bubbles dropping animation */
+@keyframes floatBubble {
+  0% {
+    transform: translateY(-5vh) translateX(0) scale(0.3);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(105vh) translateX(50px) scale(1.1);
+    opacity: 0;
+  }
+}
+
+.animate-float-bubble {
+  animation: floatBubble 8s linear infinite;
+}
+
