@@ -18,7 +18,8 @@ export async function searchGuest(req, res) {
         OR: [
           { serialNumber: { equals: searchTerm } },
           { invite: { familyName: { contains: searchTerm } } },
-          { attendees: { some: { fullName: { contains: searchTerm } } } }
+          { attendees: { some: { fullName: { contains: searchTerm } } } },
+          { attendees: { some: { serialNumber: { equals: searchTerm } } } }
         ]
       },
       include: {
@@ -42,17 +43,45 @@ export async function checkIn(req, res) {
   }
 
   try {
-    const rsvp = await prisma.rSVP.findUnique({
+    // 1. Try to find the Attendee by serialNumber
+    let attendee = await prisma.attendee.findUnique({
       where: { serialNumber: serialNumber },
-      include: { invite: true }
+      include: {
+        rsvp: {
+          include: { invite: true }
+        }
+      }
     });
 
-    if (!rsvp) {
-      return res.status(404).json({ error: 'RSVP record not found for this serial number.' });
+    // 2. Fallback: if not found, check if it matches the parent RSVP serialNumber
+    if (!attendee) {
+      const rsvp = await prisma.rSVP.findUnique({
+        where: { serialNumber: serialNumber },
+        include: {
+          invite: true,
+          attendees: {
+            take: 1
+          }
+        }
+      });
+      if (rsvp && rsvp.attendees.length > 0) {
+        attendee = await prisma.attendee.findUnique({
+          where: { id: rsvp.attendees[0].id },
+          include: {
+            rsvp: {
+              include: { invite: true }
+            }
+          }
+        });
+      }
     }
 
-    if (rsvp.checkedIn) {
-      return res.status(400).json({ error: 'This guest has already checked in.' });
+    if (!attendee) {
+      return res.status(404).json({ error: 'Attendee record not found for this serial number.' });
+    }
+
+    if (attendee.checkedIn) {
+      return res.status(400).json({ error: `${attendee.fullName} is already checked in.` });
     }
 
     let checkInPhotoUrl = null;
@@ -68,9 +97,9 @@ export async function checkIn(req, res) {
       }
     }
 
-    // Update RSVP record
-    const updatedRSVP = await prisma.rSVP.update({
-      where: { id: rsvp.id },
+    // Update Attendee record
+    const updatedAttendee = await prisma.attendee.update({
+      where: { id: attendee.id },
       data: {
         checkedIn: true,
         checkedInAt: new Date(),
@@ -79,19 +108,32 @@ export async function checkIn(req, res) {
         checkedOutAt: null
       },
       include: {
-        attendees: true,
-        invite: true
+        rsvp: {
+          include: {
+            invite: true,
+            attendees: true
+          }
+        }
+      }
+    });
+
+    // Also update parent RSVP status for compatibility
+    await prisma.rSVP.update({
+      where: { id: attendee.rsvpId },
+      data: {
+        checkedIn: true,
+        checkedInAt: new Date()
       }
     });
 
     res.json({
       message: 'Check-in successful!',
-      familyName: updatedRSVP.invite.familyName,
-      serialNumber: updatedRSVP.serialNumber,
-      attendanceCount: updatedRSVP.attendanceCount,
-      attendees: updatedRSVP.attendees,
-      checkedInAt: updatedRSVP.checkedInAt,
-      checkInPhoto: updatedRSVP.checkInPhoto
+      familyName: updatedAttendee.rsvp.invite.familyName,
+      serialNumber: updatedAttendee.serialNumber,
+      attendanceCount: updatedAttendee.rsvp.attendanceCount,
+      attendees: updatedAttendee.rsvp.attendees,
+      checkedInAt: updatedAttendee.checkedInAt,
+      checkInPhoto: updatedAttendee.checkInPhoto
     });
   } catch (error) {
     console.error('Error during check-in:', error);
@@ -107,39 +149,88 @@ export async function checkOut(req, res) {
   }
 
   try {
-    const rsvp = await prisma.rSVP.findUnique({
+    let attendee = await prisma.attendee.findUnique({
       where: { serialNumber: serialNumber },
-      include: { invite: true }
+      include: {
+        rsvp: {
+          include: { invite: true }
+        }
+      }
     });
 
-    if (!rsvp) {
-      return res.status(404).json({ error: 'RSVP record not found for this serial number.' });
+    if (!attendee) {
+      const rsvp = await prisma.rSVP.findUnique({
+        where: { serialNumber: serialNumber },
+        include: {
+          invite: true,
+          attendees: {
+            take: 1
+          }
+        }
+      });
+      if (rsvp && rsvp.attendees.length > 0) {
+        attendee = await prisma.attendee.findUnique({
+          where: { id: rsvp.attendees[0].id },
+          include: {
+            rsvp: {
+              include: { invite: true }
+            }
+          }
+        });
+      }
     }
 
-    if (!rsvp.checkedIn) {
-      return res.status(400).json({ error: 'This guest is not currently checked in.' });
+    if (!attendee) {
+      return res.status(404).json({ error: 'Attendee record not found for this serial number.' });
     }
 
-    // Update RSVP record
-    const updatedRSVP = await prisma.rSVP.update({
-      where: { id: rsvp.id },
+    if (!attendee.checkedIn) {
+      return res.status(400).json({ error: `${attendee.fullName} is not currently checked in.` });
+    }
+
+    // Update Attendee record
+    const updatedAttendee = await prisma.attendee.update({
+      where: { id: attendee.id },
       data: {
         checkedIn: false,
         checkedOut: true,
         checkedOutAt: new Date()
       },
       include: {
-        attendees: true,
-        invite: true
+        rsvp: {
+          include: {
+            invite: true,
+            attendees: true
+          }
+        }
       }
     });
 
+    // Also update parent RSVP's checkedOut status if all attendees are checked out
+    const remainingCheckedIn = await prisma.attendee.count({
+      where: {
+        rsvpId: attendee.rsvpId,
+        checkedIn: true
+      }
+    });
+
+    if (remainingCheckedIn === 0) {
+      await prisma.rSVP.update({
+        where: { id: attendee.rsvpId },
+        data: {
+          checkedIn: false,
+          checkedOut: true,
+          checkedOutAt: new Date()
+        }
+      });
+    }
+
     res.json({
       message: 'Check-out successful!',
-      familyName: updatedRSVP.invite.familyName,
-      serialNumber: updatedRSVP.serialNumber,
-      attendanceCount: updatedRSVP.attendanceCount,
-      checkedOutAt: updatedRSVP.checkedOutAt
+      familyName: updatedAttendee.rsvp.invite.familyName,
+      serialNumber: updatedAttendee.serialNumber,
+      attendanceCount: updatedAttendee.rsvp.attendanceCount,
+      checkedOutAt: updatedAttendee.checkedOutAt
     });
   } catch (error) {
     console.error('Error during check-out:', error);

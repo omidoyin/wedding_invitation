@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Users, CheckSquare, ShieldCheck, Heart, LogOut, Plus, 
-  Trash2, Check, Download, Image, DollarSign, Filter, RefreshCw
+  Trash2, Check, Download, Image, DollarSign, Filter, RefreshCw, Copy
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -22,9 +22,11 @@ export default function AdminDashboard() {
   const [createMsg, setCreateMsg] = useState('');
   
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'invites', 'gallery', 'donations'
+  const [copiedId, setCopiedId] = useState(null); // tracks which invite link was copied
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+  const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
   const token = localStorage.getItem('admin_token');
 
   useEffect(() => {
@@ -93,7 +95,7 @@ export default function AdminDashboard() {
         maxGuests
       }, { headers });
 
-      setCreateMsg(`Created successfully! Token: ${res.data.invite.inviteToken}`);
+      setCreateMsg(`✅ Created! Share this link:\n${FRONTEND_URL}/invite/${res.data.invite.inviteToken}`);
       setFamilyName('');
       loadDashboardData(); // Refresh list & stats
     } catch (err) {
@@ -135,6 +137,14 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleCopyLink = (inviteToken, id) => {
+    const link = `${FRONTEND_URL}/invite/${inviteToken}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
+
   if (loading && !stats) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen" style={{background:'#150709'}}>
@@ -172,7 +182,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 text-wedding-wine hover:bg-wedding-wineDark hover:text-wedding-beige font-playfair text-xs tracking-wider border border-wedding-wine/45 px-4 py-2 rounded-xl bg-black/30 transition"
+            className="flex items-center gap-2 text-white hover:bg-wedding-wineDark hover:text-wedding-beige font-playfair text-xs tracking-wider border border-wedding-wine/45 px-4 py-2 rounded-xl bg-black/30 transition"
           >
             <LogOut className="w-4 h-4" /> LOG OUT
           </button>
@@ -301,7 +311,7 @@ export default function AdminDashboard() {
 
                   <button
                     type="submit"
-                    className="w-full py-3.5 bg-wedding-wine text-wedding-beige hover:bg-wedding-wineDark transition-all duration-300 font-playfair tracking-widest text-xs rounded-xl border border-wedding-gold/20 hover:border-wedding-gold"
+                    className="w-full py-3.5 bg-wedding-wine text-white hover:bg-wedding-wineDark transition-all duration-300 font-playfair tracking-widest text-xs rounded-xl border border-wedding-gold/20 hover:border-wedding-gold"
                   >
                     GENERATE LINK
                   </button>
@@ -387,8 +397,31 @@ export default function AdminDashboard() {
                           {invite.rsvpSubmitted ? 'RSVP\'d' : 'Pending'}
                         </span>
                       </td>
-                      <td className="py-3.5 pr-4 select-all font-mono text-[#E5C04A]">
-                        invite/{invite.inviteToken}
+                      <td className="py-3.5 pr-4">
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={`${FRONTEND_URL}/invite/${invite.inviteToken}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono text-[#E5C04A] hover:underline break-all text-[10px]"
+                            title="Open invite link"
+                          >
+                            {FRONTEND_URL}/invite/{invite.inviteToken}
+                          </a>
+                          <button
+                            onClick={() => handleCopyLink(invite.inviteToken, invite.id)}
+                            title="Copy link"
+                            className={`shrink-0 p-1.5 rounded-lg border transition-all duration-200 ${
+                              copiedId === invite.id
+                                ? 'bg-wedding-emerald/30 border-wedding-emerald/60 text-wedding-emeraldLight'
+                                : 'bg-white/5 border-wedding-gold/20 text-[#FAF8F5]/50 hover:text-[#E5C04A] hover:border-wedding-gold/50'
+                            }`}
+                          >
+                            {copiedId === invite.id
+                              ? <Check className="w-3 h-3" />
+                              : <Copy className="w-3 h-3" />}
+                          </button>
+                        </div>
                       </td>
                       <td className="py-3.5 font-semibold">
                         {invite.rsvp?.checkedIn ? (

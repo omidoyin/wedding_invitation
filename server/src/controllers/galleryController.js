@@ -1,47 +1,42 @@
 import prisma from '../config/prismaClient.js';
-import { uploadImage } from '../config/cloudinary.js';
 import { v2 as cloudinary } from 'cloudinary';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Configure Cloudinary for moderation (delete on reject)
+if (
+  process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY &&
+  process.env.CLOUDINARY_API_SECRET
+) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+}
 
 export async function uploadPhoto(req, res) {
-  const { uploadedBy } = req.body;
+  const { imageUrl, cloudinaryId, uploadedBy } = req.body;
 
-  if (!req.file) {
-    return res.status(400).json({ error: 'No image file uploaded.' });
+  if (!imageUrl || !cloudinaryId) {
+    return res.status(400).json({ error: 'imageUrl and cloudinaryId are required.' });
   }
 
   try {
-    const uploadResult = await uploadImage(req.file.path, 'gallery');
-
     const photo = await prisma.galleryPhoto.create({
       data: {
         uploadedBy: uploadedBy ? uploadedBy.trim() : 'Anonymous Guest',
-        imageUrl: uploadResult.imageUrl,
-        cloudinaryId: uploadResult.cloudinaryId,
+        imageUrl,
+        cloudinaryId,
         approved: false // Needs admin moderation
       }
     });
-
-    // Delete temp file from disk if multer saved it in a temp dir
-    try {
-      if (fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
-    } catch (err) {
-      console.error('Failed to delete temp upload file:', err);
-    }
 
     res.status(201).json({
       message: 'Photo uploaded successfully! It will be visible in the gallery once approved by the hosts.',
       photo
     });
   } catch (error) {
-    console.error('Error uploading photo:', error);
+    console.error('Error saving photo to database:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -83,24 +78,11 @@ export async function moderatePhoto(req, res) {
       });
       return res.json({ message: 'Photo approved successfully!', photo: updatedPhoto });
     } else {
-      // Reject: delete from storage and database
-      // 1. Delete from Cloudinary or local file system
-      if (photo.cloudinaryId.startsWith('local-')) {
-        const fileName = photo.cloudinaryId.replace('local-', '');
-        const filePath = path.join(__dirname, '../../public/uploads', fileName);
-        try {
-          if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-          }
-        } catch (err) {
-          console.error('Failed to delete local file on rejection:', err);
-        }
-      } else {
-        try {
-          await cloudinary.uploader.destroy(photo.cloudinaryId);
-        } catch (err) {
-          console.error('Failed to delete Cloudinary asset on rejection:', err);
-        }
+      // Reject: delete from Cloudinary and database
+      try {
+        await cloudinary.uploader.destroy(photo.cloudinaryId);
+      } catch (err) {
+        console.error('Failed to delete Cloudinary asset on rejection:', err);
       }
 
       // 2. Delete from DB

@@ -13,7 +13,8 @@ export default function GalleryPage() {
   const [uploadMsg, setUploadMsg] = useState('');
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+  const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
   async function fetchPhotos() {
     try {
@@ -40,25 +41,42 @@ export default function GalleryPage() {
       alert('Please select an image file to upload.');
       return;
     }
+    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+      setUploadMsg('Upload is not configured yet. Please contact the hosts.');
+      return;
+    }
     setUploadLoading(true);
     setUploadMsg('');
 
-    const formData = new FormData();
-    formData.append('photo', selectedFile);
-    formData.append('uploadedBy', guestName);
-
     try {
-      const res = await axios.post(`${API_URL}/gallery/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      // Step 1: Upload directly to Cloudinary from the browser
+      const cloudinaryForm = new FormData();
+      cloudinaryForm.append('file', selectedFile);
+      cloudinaryForm.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      cloudinaryForm.append('folder', 'gallery');
+
+      const cloudinaryRes = await axios.post(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        cloudinaryForm
+      );
+
+      const { secure_url, public_id } = cloudinaryRes.data;
+
+      // Step 2: Save only the URL + metadata to our backend database
+      const res = await axios.post(`${API_URL}/gallery/upload`, {
+        imageUrl: secure_url,
+        cloudinaryId: public_id,
+        uploadedBy: guestName
       });
+
       setUploadMsg(res.data.message);
       setSelectedFile(null);
       setGuestName('');
       document.getElementById('file-upload').value = '';
-      fetchPhotos(); // Reload gallery
+      fetchPhotos();
     } catch (err) {
       console.error(err);
-      setUploadMsg('Failed to upload photo. Only image files under 10MB are accepted.');
+      setUploadMsg('Failed to upload photo. Only image files (jpg, png, webp) under 10MB are accepted.');
     } finally {
       setUploadLoading(false);
     }
@@ -149,7 +167,7 @@ export default function GalleryPage() {
               {photos.map((photo) => (
                 <div key={photo.id} className="relative group overflow-hidden rounded-xl border border-wedding-gold/10 break-inside-avoid bg-wedding-darkCard/40 shadow-md">
                   <img 
-                    src={photo.imageUrl.startsWith('/uploads') ? `${BACKEND_URL}${photo.imageUrl}` : photo.imageUrl} 
+                    src={photo.imageUrl} 
                     alt="Wedding moment" 
                     className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"

@@ -106,7 +106,7 @@ export default function EnvelopePage() {
       {/* Envelope Container */}
       <div 
         onClick={!isOpen ? handleOpenEnvelope : undefined}
-        className={`relative w-full max-w-[420px] aspect-[4/3] z-10 transition-all duration-500 ${!isOpen ? 'hover:scale-[1.02] active:scale-[0.99] cursor-pointer' : ''}`}
+        className={`relative w-full max-w-[1000px] aspect-[4/3] z-10 transition-all duration-500 ${!isOpen ? 'hover:scale-[1.02] active:scale-[0.99] cursor-pointer' : ''}`}
         style={{ perspective: '1000px' }}
       >
         
@@ -121,45 +121,46 @@ export default function EnvelopePage() {
         <motion.div
           initial={{ y: 15, scale: 0.95, zIndex: 20, opacity: 0.9 }}
           animate={isOpen ? { 
-            y: -140, // Slide up
+            y: -180, // Slide up
             scale: 1.05, // Zoom in
             zIndex: 50, // Bring in front of all flaps
             opacity: 1
           } : { 
             y: 15, 
             scale: 0.95, 
-            zIndex: 20, 
+            zIndex: 10, 
             opacity: 0.9 
           }}
           transition={{ delay: 0.6, duration: 1.2, cubicBezier: [0.16, 1, 0.3, 1] }}
-          className="absolute w-[90%] h-[90%] left-[5%] bg-white text-wedding-wineDark rounded-xl shadow-2xl p-6 flex flex-col justify-between border-2 border-wedding-gold/40"
+          className="absolute w-[90%] h-[90%] left-[5%] bg-white text-wedding-wineDark rounded-xl shadow-2xl p-1 flex flex-col justify-between border-2 border-wedding-gold/40"
         >
-          <div className="text-center">
-            <div className="border border-wedding-wine/20 p-4 rounded-lg flex flex-col justify-between h-[180px]">
-              <h3 className="font-playfair text-xs tracking-[0.2em] uppercase text-wedding-wine/80 mb-2">You are cordially invited</h3>
+          <div className="text-center ">
+            <div className="border border-wedding-wine/20 p-1 rounded-lg flex flex-col justify-between h-[160px] ">
+              <h3 className="font-playfair text-xs tracking-[0.2em] uppercase text-wedding-wine/80 mt-1">You are cordially invited</h3>
               
-              <div className="my-2">
+              <div className="m- ">
                 <p className="font-playfair text-base italic text-wedding-wine">The</p>
-                <p className="font-playfair text-2xl font-bold text-wedding-wineDark tracking-wide mt-0.5">
-                  {invite?.familyName || 'Family'}
+                <p className="font-playfair text-2xl font-bold text-wedding-wineDark tracking-wide capitalize">
+                  {invite?.isAttendee ? invite.currentAttendee?.fullName : (invite?.familyName || 'Family')}
                 </p>
-                <p className="text-[10px] font-poppins text-gray-500 tracking-wider mt-0.5 uppercase">
+                {/* <p className="text-[10px] font-poppins text-gray-500 tracking-wider mt-0.5 uppercase">
                   Category: {invite?.category || 'Guest'}
-                </p>
+                </p> */}
               </div>
               
-              <p className="text-[11px] font-poppins text-gray-700 leading-relaxed max-w-[280px] mx-auto mt-1">
-                Warmly welcomes you to celebrate the joining of our hearts as we begin our forever.
+              <p className="text-[11px] font-poppins text-gray-700 leading-relaxed max-w-[280px] mx-auto ">
+                We warmly welcome you to celebrate the joining of our hearts as we begin our forever.
               </p>
             </div>
           </div>
 
           <button
             onClick={(e) => {
+              if (!isOpen) return; // block navigation until envelope is open
               e.stopPropagation();
               navigate(`/invite/${token}/home`);
             }}
-            className="w-full py-3 bg-wedding-wine text-[#FAF8F5] hover:bg-wedding-wineDark transition-all duration-300 font-playfair tracking-widest text-sm rounded-lg hover:shadow-lg hover:border hover:border-wedding-gold/50 flex items-center justify-center gap-2 mt-4 cursor-pointer"
+            className={`w-full py-3 bg-wedding-wine text-[#FAF8F5] hover:bg-wedding-wineDark transition-all duration-300 font-playfair tracking-widest text-sm rounded-lg hover:shadow-lg hover:border hover:border-wedding-gold/50 flex items-center justify-center gap-2 mt-4 ${isOpen ? 'cursor-pointer' : 'pointer-events-none'}`}
           >
             SEE MORE
           </button>
@@ -222,12 +223,14 @@ export default function EnvelopePage() {
               </div>
 
               {/* Bottom Element: Guest Name Label Card */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[85%] max-w-[280px] bg-[#FAF8F5] text-wedding-wineDark border-2 border-wedding-gold/60 px-5 py-2.5 rounded-xl shadow-[0_8px_20px_rgba(0,0,0,0.5)]">
+              <div  
+              // onClick={!isOpen ? handleOpenEnvelope : undefined}
+               className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[85%] max-w-[280px] bg-[#FAF8F5] text-wedding-wineDark border-2 border-wedding-gold/60 px-5 py-3 rounded-xl shadow-[0_8px_20px_rgba(0,0,0,0.5)]">
                 <p className="text-[10px] text-wedding-gold font-poppins uppercase tracking-widest font-bold">
                   Specially Invited
                 </p>
-                <p className="font-playfair text-sm sm:text-base font-extrabold tracking-wide text-wedding-wine mt-0.5">
-                  {invite?.familyName || 'Family'}
+                <p className="font-playfair text-sm sm:text-base font-extrabold tracking-wide text-wedding-wine mt-0.5 capitalize">
+                  {invite?.isAttendee ? invite.currentAttendee?.fullName : (invite?.familyName || 'Family')}
                 </p>
               </div>
             </motion.div>
@@ -237,7 +240,7 @@ export default function EnvelopePage() {
       </div>
 
       {/* Decorative footer */}
-      <p className="text-[11px] text-wedding-gold/40 font-poppins tracking-[0.2em] mt-16 z-10 text-center">
+      <p className="text-[11px] text-wedding-gold/90 font-poppins tracking-[0.2em] mt-16 z-10 text-center">
         DESIGNED FOR THE WEDDING OF AYODEJI & ADESEWA
       </p>
     </div>

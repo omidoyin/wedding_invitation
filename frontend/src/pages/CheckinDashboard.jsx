@@ -17,6 +17,7 @@ export default function CheckinDashboard() {
   
   // Camera & Checkin states
   const [activeCheckinRsvp, setActiveCheckinRsvp] = useState(null);
+  const [activeCheckinAttendee, setActiveCheckinAttendee] = useState(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraStream, setCameraStream] = useState(null);
   const [capturedBlob, setCapturedBlob] = useState(null);
@@ -217,7 +218,7 @@ export default function CheckinDashboard() {
 
     const fileToUpload = capturedBlob || fileFallback;
     const formData = new FormData();
-    formData.append('serialNumber', activeCheckinRsvp.serialNumber);
+    formData.append('serialNumber', activeCheckinAttendee?.serialNumber || activeCheckinRsvp?.serialNumber);
     if (fileToUpload) {
       formData.append('photo', fileToUpload, 'checkin.jpg');
     }
@@ -229,7 +230,7 @@ export default function CheckinDashboard() {
       };
       
       const res = await axios.post(`${API_URL}/checkin`, formData, { headers });
-      alert(`Guest checked in successfully! \nFamily: ${res.data.familyName} \nGuests: ${res.data.attendanceCount}`);
+      alert(`Guest checked in successfully! \nFamily: ${res.data.familyName}`);
       
       closeCheckinModal();
       performSearch(searchQuery); // Refresh search results
@@ -241,15 +242,11 @@ export default function CheckinDashboard() {
     }
   };
 
-  const handleCheckout = async (rsvp) => {
-    if (!window.confirm(`Are you sure you want to CHECK OUT the ${rsvp.invite.familyName} family?`)) {
-      return;
-    }
-
+  const handleCheckout = async (attendee) => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
       const res = await axios.post(`${API_URL}/checkin/checkout`, {
-        serialNumber: rsvp.serialNumber
+        serialNumber: attendee.serialNumber
       }, { headers });
 
       alert(`Guest checked out successfully! \nFamily: ${res.data.familyName}`);
@@ -263,6 +260,7 @@ export default function CheckinDashboard() {
   const closeCheckinModal = () => {
     stopCamera();
     setActiveCheckinRsvp(null);
+    setActiveCheckinAttendee(null);
     setCapturedBlob(null);
     setCapturedUrl('');
     setFileFallback(null);
@@ -284,7 +282,7 @@ export default function CheckinDashboard() {
 
         <button
           onClick={handleLogout}
-          className="flex items-center gap-1.5 text-wedding-wine hover:bg-wedding-wine/25 border border-wedding-wine/40 px-3 py-1.5 rounded-lg bg-black/30 transition text-xs font-playfair tracking-wider"
+          className="flex items-center gap-1.5 text-white hover:bg-wedding-wine/25 border border-wedding-wine/40 px-3 py-1.5 rounded-lg bg-black/30 transition text-xs font-playfair tracking-wider"
         >
           <LogOut className="w-3.5 h-3.5" /> LOG OUT
         </button>
@@ -318,7 +316,7 @@ export default function CheckinDashboard() {
             <button
               type="submit"
               disabled={searching}
-              className="px-6 py-2.5 bg-wedding-wine text-wedding-beige hover:bg-wedding-wineDark transition font-playfair text-xs tracking-wider rounded-xl border border-wedding-gold/20 cursor-pointer"
+              className="px-6 py-2.5 bg-wedding-wine text-whitehover:bg-wedding-wineDark transition font-playfair text-xs tracking-wider rounded-xl border border-wedding-gold/20 cursor-pointer"
             >
               {searching ? 'SEARCHING...' : 'SEARCH'}
             </button>
@@ -360,83 +358,84 @@ export default function CheckinDashboard() {
                       <span className="font-semibold text-[#FAF8F5]">{rsvp.attendanceCount} guests</span>
                     </div>
                     <div>
-                      <span className="text-wedding-beige/50 block">Status:</span>
-                      <span className={`font-semibold ${
-                        rsvp.checkedIn 
-                          ? 'text-wedding-emeraldLight' 
-                          : rsvp.checkedOut 
-                            ? 'text-wedding-wineLight' 
-                            : 'text-amber-600'
-                      }`}>
-                        {rsvp.checkedIn 
-                          ? 'Checked In' 
-                          : rsvp.checkedOut 
-                            ? 'Checked Out' 
-                            : 'Pending Entry'}
+                      <span className="text-white block">Status:</span>
+                      <span className="font-semibold text-wedding-gold">
+                        {rsvp.attendees.filter(a => a.checkedIn).length} of {rsvp.attendees.length} Checked In
                       </span>
                     </div>
                   </div>
 
-                  {/* Individual Guest Names */}
-                  <div className="pt-2">
-                    <span className="text-[10px] text-[#E5C04A] uppercase tracking-wider block font-semibold mb-1">Attendee Names:</span>
-                    <ul className="text-xs text-[#FAF8F5]/80 list-disc pl-4 space-y-0.5">
+                  {/* Individual Guest Names & Checkin status */}
+                  <div className="pt-2 space-y-3">
+                    <span className="text-[10px] text-[#E5C04A] uppercase tracking-wider block font-semibold mb-1">Attendee Passes:</span>
+                    <div className="space-y-3">
                       {rsvp.attendees.map((att) => (
-                        <li key={att.id}>{att.fullName} {att.phoneNumber ? `(${att.phoneNumber})` : ''}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Status Column / Check-in CTA */}
-                <div className="shrink-0 flex flex-col items-start md:items-end gap-3 justify-center">
-                  {rsvp.checkedIn ? (
-                    <div className="text-left md:text-right space-y-2">
-                      <div className="flex items-center gap-1.5 text-wedding-emeraldLight text-xs font-semibold">
-                        <CheckCircle2 className="w-4 h-4" /> Checked In
-                      </div>
-                      <span className="text-[10px] text-wedding-beige/50 block">
-                        At: {rsvp.checkedInAt ? new Date(rsvp.checkedInAt).toLocaleTimeString() : ''}
-                      </span>
-                      <div className="flex gap-2 flex-wrap items-center mt-1">
-                        {rsvp.checkInPhoto && (
-                          <a 
-                            href={rsvp.checkInPhoto.startsWith('/uploads') ? `${BACKEND_URL}${rsvp.checkInPhoto}` : rsvp.checkInPhoto} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            className="inline-block text-[10px] text-wedding-gold border border-wedding-gold/20 px-2 py-1 rounded bg-wedding-darkCard/40 hover:bg-wedding-wine/20"
-                          >
-                            View Entry Photo
-                          </a>
-                        )}
-                        <button
-                          onClick={() => handleCheckout(rsvp)}
-                          className="px-3 py-1.5 bg-wedding-wine hover:bg-wedding-wineDark text-wedding-lightBeige hover:text-white font-playfair text-[10px] tracking-wider rounded-lg border border-wedding-gold/20 flex items-center gap-1 transition cursor-pointer"
+                        <div 
+                          key={att.id} 
+                          className="p-4 rounded-xl border border-wedding-gold/10 bg-black/35 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                         >
-                          <LogOut className="w-3 h-3" /> CHECK OUT
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-left md:text-right space-y-2">
-                      {rsvp.checkedOut && (
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-1.5 text-wedding-wineLight text-xs font-semibold justify-start md:justify-end">
-                            <ShieldAlert className="w-4 h-4" /> Checked Out
+                          <div>
+                            <span className="font-semibold text-[#FAF8F5] text-sm block">
+                              {att.fullName}
+                            </span>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[9px] bg-wedding-darkCard border border-wedding-gold/15 px-2 py-0.5 rounded font-mono text-wedding-gold">
+                                {att.serialNumber}
+                              </span>
+                              {att.phoneNumber && (
+                                <span className="text-[10px] text-wedding-beige/50">{att.phoneNumber}</span>
+                              )}
+                            </div>
+                            
+                            {/* Individual Checkin Details */}
+                            {att.checkedIn && (
+                              <div className="mt-2 text-[10px] text-wedding-emeraldLight flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Checked In at {att.checkedInAt ? new Date(att.checkedInAt).toLocaleTimeString() : ''}
+                              </div>
+                            )}
+                            {att.checkedOut && !att.checkedIn && (
+                              <div className="mt-2 text-[10px] text-wedding-wineLight flex items-center gap-1">
+                                <ShieldAlert className="w-3.5 h-3.5" /> Checked Out at {att.checkedOutAt ? new Date(att.checkedOutAt).toLocaleTimeString() : ''}
+                              </div>
+                            )}
                           </div>
-                          <span className="text-[10px] text-wedding-beige/50 block">
-                            At: {rsvp.checkedOutAt ? new Date(rsvp.checkedOutAt).toLocaleTimeString() : ''}
-                          </span>
+
+                          <div className="shrink-0 flex items-center gap-2">
+                            {att.checkedIn ? (
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {att.checkInPhoto && (
+                                  <a 
+                                    href={att.checkInPhoto.startsWith('/uploads') ? `${BACKEND_URL}${att.checkInPhoto}` : att.checkInPhoto} 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="inline-block text-[10px] text-wedding-gold border border-wedding-gold/20 px-2.5 py-1.5 rounded bg-wedding-darkCard/40 hover:bg-wedding-wine/20 transition"
+                                  >
+                                    View Photo
+                                  </a>
+                                )}
+                                <button
+                                  onClick={() => handleCheckout(att)}
+                                  className="px-3 py-1.5 bg-wedding-wine hover:bg-wedding-wineDark text-wedding-lightBeige hover:text-white font-playfair text-[10px] tracking-wider rounded-lg border border-wedding-gold/20 flex items-center gap-1 transition cursor-pointer"
+                                >
+                                  <LogOut className="w-3 h-3" /> CHECK OUT
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setActiveCheckinAttendee(att);
+                                  setActiveCheckinRsvp(rsvp);
+                                }}
+                                className="px-4 py-2 bg-[#133015] hover:bg-wedding-emeraldDark text-white font-playfair text-[10px] tracking-wider rounded-lg border border-wedding-gold/25 hover:border-wedding-gold flex items-center gap-1.5 transition cursor-pointer"
+                              >
+                                <UserCheck className="w-3.5 h-3.5 text-wedding-gold" /> {att.checkedOut ? 'APPROVE RE-ENTRY' : 'APPROVE ENTRY'}
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      )}
-                      <button
-                        onClick={() => setActiveCheckinRsvp(rsvp)}
-                        className="px-6 py-3 bg-[#133015] hover:bg-wedding-emeraldDark text-wedding-beige font-playfair text-xs tracking-wider rounded-xl border border-wedding-gold/25 hover:border-wedding-gold flex items-center gap-1.5 transition cursor-pointer"
-                      >
-                        <UserCheck className="w-4 h-4 text-wedding-gold" /> {rsvp.checkedOut ? 'APPROVE RE-ENTRY' : 'APPROVE ENTRY'}
-                      </button>
+                      ))}
                     </div>
-                  )}
+                  </div>
                 </div>
 
               </div>
@@ -455,7 +454,8 @@ export default function CheckinDashboard() {
             <div className="flex items-center justify-between pb-2 border-b border-wedding-gold/10">
               <div>
                 <h3 className="font-playfair text-wedding-gold text-sm tracking-widest uppercase">Verify Guest Entry</h3>
-                <p className="text-[11px] text-[#FAF8F5]/60 truncate mt-0.5">{activeCheckinRsvp.invite.familyName} Family | {activeCheckinRsvp.serialNumber}</p>
+                <p className="text-[12px] text-white font-semibold truncate mt-0.5">{activeCheckinAttendee?.fullName || activeCheckinRsvp?.invite?.familyName}</p>
+                <p className="text-[10px] text-[#FAF8F5]/60 truncate">Pass: {activeCheckinAttendee?.serialNumber || activeCheckinRsvp?.serialNumber} ({activeCheckinRsvp?.invite?.familyName} Family)</p>
               </div>
               <button 
                 onClick={closeCheckinModal}
@@ -555,7 +555,7 @@ export default function CheckinDashboard() {
               <button
                 onClick={submitCheckin}
                 disabled={checkinLoading}
-                className="w-full py-4 bg-[#133015] hover:bg-wedding-emeraldDark text-wedding-beige font-playfair tracking-widest text-xs rounded-xl border border-wedding-gold/20 hover:border-wedding-gold flex items-center justify-center gap-2 mt-4 disabled:opacity-40 transition cursor-pointer"
+                className="w-full py-4 bg-[#133015] hover:bg-wedding-emeraldDark text-white font-playfair tracking-widest text-xs rounded-xl border border-wedding-gold/20 hover:border-wedding-gold flex items-center justify-center gap-2 mt-4 disabled:opacity-40 transition cursor-pointer"
               >
                 {checkinLoading 
                   ? 'UPLOADING & REGISTERING...' 
@@ -578,7 +578,7 @@ export default function CheckinDashboard() {
             <div className="flex items-center justify-between pb-2 border-b border-wedding-gold/10">
               <div>
                 <h3 className="font-playfair text-wedding-gold text-sm tracking-widest uppercase">Scan Entry QR Code</h3>
-                <p className="text-[11px] text-wedding-beige/60 mt-0.5">Point camera at the guest's QR code</p>
+                <p className="text-[11px] text-white mt-0.5">Point camera at the guest's QR code</p>
               </div>
               <button 
                 onClick={() => setQrScannerActive(false)}

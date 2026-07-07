@@ -113,7 +113,7 @@ export async function getDashboardStats(req, res) {
 
     // Total actual attendees checked in
     const checkedInAttendees = await prisma.attendee.count({
-      where: { rsvp: { checkedIn: true } }
+      where: { checkedIn: true }
     });
 
     // Total expected attendees from RSVPs
@@ -226,8 +226,8 @@ export async function exportGuests(req, res) {
         fullName: att.fullName,
         phoneNumber: att.phoneNumber || 'N/A',
         familyName: att.rsvp.invite.familyName,
-        serialNumber: att.rsvp.serialNumber,
-        checkInStatus: att.rsvp.checkedIn ? 'Checked In' : 'Not Checked In'
+        serialNumber: att.serialNumber,
+        checkInStatus: att.checkedIn ? 'Checked In' : 'Not Checked In'
       });
     });
 

@@ -1,6 +1,6 @@
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -36,12 +36,20 @@ model RSVP {
 }
 
 model Attendee {
-  id            Int      @id @default(autoincrement())
-  rsvpId        Int
-  fullName      String
-  phoneNumber   String?
-  createdAt     DateTime @default(now())
-  rsvp          RSVP     @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
+  id              Int      @id @default(autoincrement())
+  rsvpId          Int
+  fullName        String
+  phoneNumber     String?
+  serialNumber    String   @unique
+  attendeeToken   String   @unique
+  registeredBy    String?
+  checkedIn       Boolean   @default(false)
+  checkedInAt     DateTime?
+  checkInPhoto    String?
+  checkedOut      Boolean   @default(false)
+  checkedOutAt    DateTime?
+  createdAt       DateTime @default(now())
+  rsvp            RSVP     @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
 }
 
 model GalleryPhoto {

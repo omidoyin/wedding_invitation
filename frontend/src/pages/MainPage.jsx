@@ -4,6 +4,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import confetti from 'canvas-confetti';
+import QRCode from 'qrcode';
 import { 
   Heart, Calendar, Clock, MapPin, Shirt, Gift, 
   Camera, Upload, Download, CheckCircle, ChevronRight, Info 
@@ -21,10 +22,18 @@ export default function MainPage() {
   
   // Donation states
   const [donationAmount, setDonationAmount] = useState('');
+  const [donationDisplay, setDonationDisplay] = useState(''); // formatted display value
   const [donorName, setDonorName] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [donationSuccess, setDonationSuccess] = useState(false);
+
+  // Format a number string to comma-separated Naira display
+  const formatNairaDisplay = (raw) => {
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return '';
+    return '₦ ' + Number(digits).toLocaleString('en-NG');
+  };
 
   // Gallery states
   const [photos, setPhotos] = useState([]);
@@ -38,7 +47,7 @@ export default function MainPage() {
 
   // Couple photo carousel
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const couplePhotos = ['/img1.jpg', '/img2.jpg', '/img3.jpg'];
+  const couplePhotos = ['/img1.jpg', '/img2.jpg', '/img3.jpg', '/img4.jpeg', '/img5.jpeg'];
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
@@ -146,36 +155,9 @@ export default function MainPage() {
     }
   };
 
-  // Support Wedding - Paystack
-  const handleSupportPayment = async () => {
-    if (!donationAmount || parseFloat(donationAmount) <= 0) {
-      alert('Please enter a valid amount.');
-      return;
-    }
-    setPaymentLoading(true);
-
-    try {
-      const response = await axios.post(`${API_URL}/paystack/initialize`, {
-        amount: parseFloat(donationAmount),
-        donorName: donorName || 'Generous Guest',
-        anonymous: isAnonymous
-      });
-
-      if (response.data.authorization_url) {
-        if (response.data.isMock) {
-          // If it is sandbox mock flow, open in a window or direct checkout
-          window.location.href = response.data.authorization_url;
-        } else {
-          // Redirect to Paystack secure payment page
-          window.location.href = response.data.authorization_url;
-        }
-      }
-    } catch (error) {
-      console.error('Payment initialization error:', error);
-      alert('Failed to initialize payment gateway.');
-    } finally {
-      setPaymentLoading(false);
-    }
+  // Support Wedding - redirect directly to Paystack shop page
+  const handleSupportPayment = () => {
+    window.location.href = 'https://paystack.shop/pay/aalovestory26';
   };
 
   // Handle Local Check for Paystack redirect returns
@@ -260,6 +242,138 @@ export default function MainPage() {
     document.body.removeChild(link);
   };
 
+  const downloadAttendeeQRCard = async (attendee, familyName) => {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 800;
+      const ctx = canvas.getContext('2d');
+      
+      // 1. Draw Background Gradient (Deep Wine)
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#3D1B1E');
+      grad.addColorStop(1, '#1A0608');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // 2. Draw Gold Double Borders
+      ctx.strokeStyle = '#D4AF37';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+      ctx.lineWidth = 1;
+      ctx.strokeRect(28, 28, canvas.width - 56, canvas.height - 56);
+      
+      // 3. Draw Corner Ornaments (Simple elegant lines)
+      const drawCorner = (x, y, dx, dy) => {
+        ctx.strokeStyle = '#D4AF37';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x + dx * 20, y);
+        ctx.lineTo(x, y);
+        ctx.lineTo(x, y + dy * 20);
+        ctx.stroke();
+      };
+      drawCorner(35, 35, 1, 1);
+      drawCorner(canvas.width - 35, 35, -1, 1);
+      drawCorner(35, canvas.height - 35, 1, -1);
+      drawCorner(canvas.width - 35, canvas.height - 35, -1, -1);
+      
+      // 4. Header: "AALOVESTORY26"
+      ctx.fillStyle = '#D4AF37';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.font = 'bold 24px "Playfair Display", "Georgia", serif';
+      ctx.fillText('AALOVESTORY26', canvas.width / 2, 60);
+      
+      // Gold thin line divider under header
+      ctx.beginPath();
+      ctx.moveTo(200, 100);
+      ctx.lineTo(400, 100);
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      
+      // 5. Guest Name
+      ctx.fillStyle = '#FAF8F5';
+      ctx.font = 'bold 36px "Playfair Display", "Georgia", serif';
+      const nameY = 145;
+      ctx.fillText(attendee.fullName, canvas.width / 2, nameY);
+      
+      // 6. Registered By (if any)
+      let byText = '';
+      if (attendee.registeredBy) {
+        byText = `(Registered by: ${attendee.registeredBy})`;
+      } else if (familyName && attendee.fullName !== familyName && !familyName.includes(attendee.fullName)) {
+        byText = `(Registered by: ${familyName} Family)`;
+      }
+      
+      if (byText) {
+        ctx.fillStyle = 'rgba(250, 248, 245, 0.7)';
+        ctx.font = 'italic 18px "Poppins", "Arial", sans-serif';
+        ctx.fillText(byText, canvas.width / 2, nameY + 50);
+      }
+      
+      // 7. QR Code generation & drawing
+      const qrDataUrl = await QRCode.toDataURL(attendee.serialNumber, {
+        margin: 1,
+        width: 260,
+        color: {
+          dark: '#1A0608',
+          light: '#FAF8F5'
+        }
+      });
+      
+      const qrImg = new Image();
+      await new Promise((resolve, reject) => {
+        qrImg.onload = resolve;
+        qrImg.onerror = reject;
+        qrImg.src = qrDataUrl;
+      });
+      
+      // Draw QR background card (cream white)
+      const qrSize = 280;
+      const qrX = (canvas.width - qrSize) / 2;
+      const qrY = 270;
+      ctx.fillStyle = '#FAF8F5';
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(qrX, qrY, qrSize, qrSize, 20);
+      } else {
+        ctx.rect(qrX, qrY, qrSize, qrSize);
+      }
+      ctx.fill();
+      
+      // Draw QR code image
+      ctx.drawImage(qrImg, qrX + 10, qrY + 10, qrSize - 20, qrSize - 20);
+      
+      // 8. Serial Number below QR
+      ctx.fillStyle = '#D4AF37';
+      ctx.font = 'bold 24px "Courier New", monospace';
+      ctx.fillText(attendee.serialNumber, canvas.width / 2, qrY + qrSize + 25);
+      
+      // 9. Bottom decorative element / text
+      ctx.fillStyle = 'rgba(250, 248, 245, 0.5)';
+      ctx.font = '14px "Poppins", sans-serif';
+      ctx.fillText('PRESENT THIS PASS FOR ADMISSION', canvas.width / 2, canvas.height - 110);
+      
+      // Heart ornament at bottom
+      ctx.fillStyle = '#D4AF37';
+      ctx.font = '18px serif';
+      ctx.fillText('❤', canvas.width / 2, canvas.height - 75);
+      
+      // 10. Trigger Download
+      const dataURL = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = dataURL;
+      link.download = `AALOVESTORY26-Pass-${attendee.fullName.replace(/\s+/g, '_')}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Error generating card:', err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-wedding-darkBg">
@@ -329,7 +443,7 @@ export default function MainPage() {
             transition={{ delay: 0.6, duration: 0.8 }}
             className="text-[#FAF8F5]/90 text-sm sm:text-base tracking-[0.2em] font-playfair uppercase mt-2 mb-8"
           >
-            October 10, 2026 | Lagos, Nigeria
+            October 10, 2026 | Kwara, Nigeria
           </motion.p>
 
           {/* Call to Actions */}
@@ -416,7 +530,7 @@ export default function MainPage() {
       </section>
 
       {/* 2. LOVE STORY SECTION */}
-      <section className="py-20 px-6 max-w-4xl mx-auto border-b border-wedding-gold/10">
+      <section className="md:py-20 py-10 px-6 max-w-4xl mx-auto border-b border-wedding-gold/10">
         <div className="text-center mb-16">
           <Heart className="w-10 h-10 text-wedding-wine mx-auto mb-3 animate-pulse" />
           <h2 className="font-playfair text-3xl sm:text-4xl text-wedding-wine tracking-wider font-bold">Our Love Story</h2>
@@ -434,7 +548,7 @@ export default function MainPage() {
             </div>
             <h3 className="font-playfair text-xl text-wedding-wineDark font-bold">The First Encounter</h3>
             <p className="text-sm text-wedding-wineDark/95 mt-1 leading-relaxed">
-              We met on the university campus library steps. What started as sharing lecture notes quickly blossomed into endless chats, late-night campus coffee runs, and a deep, unbreakable friendship.
+              The first time we met, neither of us knew that a simple introduction would one day become one of the greatest blessings of our lives and quickly blossomed into endless chats, late-night talks and a deep, unbreakable friendship.
             </p>
           </div>
 
@@ -446,7 +560,7 @@ export default function MainPage() {
             </div>
             <h3 className="font-playfair text-xl text-wedding-wineDark font-bold">More Than Friends</h3>
             <p className="text-sm text-wedding-wineDark/95 mt-1 leading-relaxed">
-              After two years of supporting each other's dreams, sharing goals, and walking side by side as best friends, we realized that our hearts were irrevocably bound together. Friendship matured into a beautiful romance.
+              After two years of supporting each other's dreams, sharing goals, and walking side by side as best friends, we realized that our hearts were irrevocably bound together.  9 years of Friendship matured into a beautiful romance.
             </p>
           </div>
 
@@ -458,7 +572,7 @@ export default function MainPage() {
             </div>
             <h3 className="font-playfair text-xl text-wedding-wineDark font-bold">The Promise</h3>
             <p className="text-sm text-wedding-wineDark/95 mt-1 leading-relaxed">
-              Under a canopy of stars on an evening beach getaway, Ayodeji knelt down and asked Adesewa to spend forever with him. It was an easy, tearful "Yes!".
+              Under a canopy of stars on a beautiful evening Ayodeji knelt down and asked Adesewa to spend forever with him. It was an easy, tearful "Yes!".
             </p>
           </div>
 
@@ -477,7 +591,7 @@ export default function MainPage() {
       </section>
 
       {/* 3. EVENT DETAILS */}
-      <section className="py-20 px-6 max-w-5xl mx-auto border-b border-wedding-gold/10">
+      <section className="py-10 md:py-20 px-6 max-w-5xl mx-auto border-b border-wedding-gold/10">
         <div className="text-center mb-16">
           <Calendar className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
           <h2 className="font-playfair text-3xl sm:text-4xl text-wedding-wine tracking-wider font-bold">Event Details</h2>
@@ -497,8 +611,8 @@ export default function MainPage() {
           <div className="bg-wedding-wine text-white p-8 rounded-2xl border border-wedding-gold/30 text-center flex flex-col items-center shadow-xl">
             <MapPin className="w-8 h-8 text-wedding-gold mb-4 animate-pulse" />
             <h3 className="font-playfair text-lg text-wedding-gold font-bold mb-2">Where</h3>
-            <p className="text-sm text-wedding-lightBeige font-medium">Grand Imperial Hall</p>
-            <p className="text-xs text-[#FAF8F5]/80 mt-1">Victoria Island, Lagos, Nigeria</p>
+            <p className="text-sm text-wedding-lightBeige font-medium">SRV Hall</p>
+            <p className="text-xs text-[#FAF8F5]/80 mt-1">Ilorin, Kwara, Nigeria</p>
           </div>
 
           {/* Card 3: Dress Code */}
@@ -506,20 +620,22 @@ export default function MainPage() {
             <Shirt className="w-8 h-8 text-wedding-gold mb-4 animate-pulse" />
             <h3 className="font-playfair text-lg text-wedding-gold font-bold mb-2">Dress Code</h3>
             <p className="text-sm text-wedding-lightBeige font-medium">Luxury African Glamour</p>
-            <p className="text-xs text-[#FAF8F5]/80 mt-1">Colors: Emerald Green, Wine Red & Gold</p>
+            <p className="text-xs text-[#FAF8F5]/80 mt-1">Colors: Wine, Beige and Emerald Green</p>
           </div>
         </div>
+      
 
         {/* Map Embed & Dress Code Details */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
           <div className="bg-white p-6 rounded-2xl border-2 border-wedding-wine/10 overflow-hidden h-[300px] shadow-lg">
             <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15858.07727192663!2d3.4093655767733475!3d6.428779646879803!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103bf53280e895c7%3A0xc0c4d29f8c6e26cf!2sVictoria+Island%2C+Lagos!5e0!3m2!1sen!2sng!4v1700000000000!5m2!1sen!2sng"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3946.086369801324!2d4.6130716!3d8.490983199999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x10364d6819d4a2b3%3A0x9b21971b235ebed8!2sSRV%20Event%20Centre!5e0!3m2!1sen!2sng!4v1783366849217!5m2!1sen!2sng"
               className="w-full h-full border-0 rounded-lg"
               allowFullScreen=""
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             ></iframe>
+
           </div>
 
           <div className="bg-gradient-to-br from-[#3D1B1E] to-[#250E10] text-[#FAF8F5] p-8 rounded-2xl border border-wedding-gold/30 flex flex-col justify-center shadow-xl">
@@ -527,51 +643,51 @@ export default function MainPage() {
               <Shirt className="w-5 h-5 text-wedding-gold" /> Aso Ebi Inspiration
             </h3>
             <p className="text-sm text-wedding-lightBeige leading-relaxed mb-4">
-              To celebrate our heritage and color harmony, we invite our guests to wear our selected colors: **Emerald Green** or **Wine Red** styled with beautiful **Gold** accents.
+              To celebrate our heritage and color harmony, we invite our guests to wear our selected colors: <span className="font-semibold text-wedding-gold">Wine</span>  <span className="font-semibold text-wedding-gold">Emerald Green</span> or styled with beautiful  <span className="font-semibold text-wedding-gold">Beige</span> accents.
             </p>
-            <p className="text-sm text-wedding-lightBeige/90 leading-relaxed font-semibold">
+            {/* <p className="text-sm text-wedding-lightBeige/90 leading-relaxed font-semibold">
               For info regarding fabric purchases and tailors, please connect with the Aso Ebi Coordinator: **080-Wedding-Aso-Ebi**.
-            </p>
+            </p> */}
           </div>
         </div>
       </section>
 
       {/* 4. COLOR THEME PALETTE */}
-      <section className="py-20 px-6 max-w-4xl mx-auto border-b border-wedding-gold/10">
+      <section className="md:py-20 py-10 px-6 max-w-4xl mx-auto border-b border-wedding-gold/10">
         <div className="text-center mb-12">
           <h2 className="font-playfair text-2xl sm:text-3xl text-wedding-wine font-bold tracking-wider">Wedding Color Palette</h2>
           <div className="w-16 h-[1px] bg-wedding-gold/40 mx-auto mt-3"></div>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-6">
+        <div className="flex flex-wrap justify-center gap-2">
           {/* Color Card: Wine */}
-          <div className="w-24 sm:w-32 text-center">
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-wedding-wine border border-wedding-gold/30 shadow-lg mx-auto mb-3"></div>
-            <span className="font-playfair text-sm text-wedding-wineDark font-bold">Wine Red</span>
+          <div className="w-14 sm:w-32 text-center">
+            <div className="w-14 h-14 sm:w-32 sm:h-32 rounded-2xl bg-wedding-wine border border-wedding-gold/30 shadow-lg mx-auto mb-3"></div>
+            <span className="font-playfair text-sm text-wedding-wineDark font-bold">Wine </span>
           </div>
 
           {/* Color Card: Beige */}
-          <div className="w-24 sm:w-32 text-center">
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-wedding-lightBeige border border-wedding-gold/30 shadow-lg mx-auto mb-3"></div>
+          <div className="w-14 sm:w-32 text-center">
+            <div className="w-14 h-14 sm:w-32 sm:h-32 rounded-2xl bg-wedding-lightBeige border border-wedding-gold/30 shadow-lg mx-auto mb-3"></div>
             <span className="font-playfair text-sm text-wedding-wineDark font-bold">Luxury Beige</span>
           </div>
 
           {/* Color Card: Emerald */}
-          <div className="w-24 sm:w-32 text-center">
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-wedding-emerald border border-wedding-gold/30 shadow-lg mx-auto mb-3"></div>
+          <div className="w-14 sm:w-32 text-center">
+            <div className="w-14 h-14 sm:w-32 sm:h-32 rounded-2xl bg-wedding-emerald border border-wedding-gold/30 shadow-lg mx-auto mb-3"></div>
             <span className="font-playfair text-sm text-wedding-wineDark font-bold">Emerald Green</span>
           </div>
 
           {/* Color Card: Gold */}
-          <div className="w-24 sm:w-32 text-center">
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-wedding-gold border border-wedding-gold/30 shadow-lg mx-auto mb-3"></div>
+          <div className="w-14 sm:w-32 text-center">
+            <div className="w-14 h-14 sm:w-32 sm:h-32 rounded-2xl bg-wedding-gold border border-wedding-gold/30 shadow-lg mx-auto mb-3"></div>
             <span className="font-playfair text-sm text-wedding-wineDark font-bold">Royal Gold</span>
           </div>
         </div>
       </section>
 
       {/* 5. RSVP SECTION */}
-      <section id="rsvp" className="py-20 px-6 max-w-2xl mx-auto border-b border-wedding-gold/10 scroll-mt-20">
+      <section id="rsvp" className="md:py-20 py-10 px-6 max-w-2xl mx-auto border-b border-wedding-gold/10 scroll-mt-20">
         <div className="text-center mb-12">
           <Heart className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
           <h2 className="font-playfair text-3xl text-wedding-wine tracking-wider font-bold">RSVP</h2>
@@ -594,8 +710,14 @@ export default function MainPage() {
                 <Info className="w-6 h-6 text-wedding-gold shrink-0" />
                 <p className="text-xs text-wedding-lightBeige leading-relaxed">
                   Hi <strong className="text-white">{invite?.familyName || 'Guest'}</strong>, you are allocated a maximum of <strong className="text-white">{invite?.maxGuests || 2} guests</strong> (including yourself). Please specify the number of attendees below.
+
+                 
                 </p>
+                
               </div>
+              <p className="text-xs text-wedding-lightBeige leading-relaxed">
+                Each Attendee will be given a unique pass to access the event venue.
+              </p>
 
               {/* Number of Attendees selector */}
               <div className="space-y-2">
@@ -653,53 +775,148 @@ export default function MainPage() {
             </form>
           ) : (
             /* RSVP SUCCESS SCREEN */
-            <div className="text-center space-y-6 py-4 flex flex-col items-center">
+            <div className="text-center space-y-6 py-4 flex flex-col items-center w-full">
               <CheckCircle className="w-16 h-16 text-wedding-goldLight animate-bounce" />
               <div>
                 <h3 className="font-playfair text-2xl text-wedding-gold">RSVP Confirmed!</h3>
-                <p className="text-sm text-wedding-lightBeige mt-1">Thank you for confirming your attendance, {invite?.familyName} Family.</p>
+                {invite?.isAttendee ? (
+                  <p className="text-sm text-wedding-lightBeige mt-1">
+                    Welcome back, <strong className="text-white">{invite.currentAttendee?.fullName}</strong>.
+                  </p>
+                ) : (
+                  <p className="text-sm text-wedding-lightBeige mt-1">
+                    Thank you for confirming your attendance, {invite?.familyName} Family.
+                  </p>
+                )}
               </div>
 
-              {/* Serial number box */}
-              <div className="bg-[#240A0C] border border-wedding-gold/30 px-6 py-4 rounded-2xl inline-block shadow-md">
-                <span className="text-xs text-wedding-goldLight/80 uppercase tracking-widest font-bold block">Entry Serial Number</span>
-                <span className="text-xl sm:text-2xl font-mono text-wedding-gold font-bold tracking-wider mt-1 block">
-                  {rsvpData?.serialNumber || 'AAL-XXXXXX'}
-                </span>
+              {/* We show either the single attendee's card OR all attendees' cards */}
+              <div className="w-full space-y-8 mt-4">
+                {(() => {
+                  // Determine which attendees to show
+                  const listToShow = invite?.isAttendee && invite?.currentAttendee
+                    ? rsvpData?.attendees?.filter(a => a.attendeeToken === invite.currentAttendee.attendeeToken) || [invite.currentAttendee]
+                    : rsvpData?.attendees || [];
+
+                  if (listToShow.length === 0) {
+                    // Fallback to group QR if no individual attendees are found
+                    return (
+                      <div className="flex flex-col items-center space-y-6">
+                        <div className="bg-[#240A0C] border border-wedding-gold/30 px-6 py-4 rounded-2xl inline-block shadow-md">
+                          <span className="text-xs text-wedding-goldLight/80 uppercase tracking-widest font-bold block">Entry Serial Number</span>
+                          <span className="text-xl sm:text-2xl font-mono text-wedding-gold font-bold tracking-wider mt-1 block">
+                            {rsvpData?.serialNumber || 'AAL-XXXXXX'}
+                          </span>
+                        </div>
+
+                        {rsvpData?.qrCode && (
+                          <div className="bg-white p-3 rounded-2xl inline-block border-2 border-wedding-gold/40 shadow-xl">
+                            <img src={rsvpData.qrCode} alt="Entry QR Code" className="w-40 h-40" />
+                          </div>
+                        )}
+                        <button
+                          onClick={downloadQRCode}
+                          className="px-6 py-2.5 bg-wedding-gold text-wedding-wineDark hover:bg-wedding-goldLight transition-all duration-300 font-playfair font-bold text-xs tracking-wider rounded-lg border border-wedding-goldLight/20 flex items-center justify-center gap-2 hover:shadow-lg"
+                        >
+                          <Download className="w-4 h-4" /> DOWNLOAD QR CODE
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="grid grid-cols-1 gap-6 max-w-lg mx-auto">
+                      {listToShow.map((att) => {
+                        // Generate copyable link
+                        const personalLink = `${window.location.origin}/invite/${att.attendeeToken}`;
+
+                        return (
+                          <div 
+                            key={att.id || att.attendeeToken} 
+                            className="bg-[#240A0C]/60 border border-wedding-gold/20 p-6 rounded-2xl flex flex-col items-center text-center shadow-lg relative overflow-hidden group"
+                          >
+                            {/* Gold header text inside the card */}
+                            <div className="text-[9px] text-wedding-gold uppercase tracking-[0.3em] font-semibold mb-3">
+                              AALOVESTORY26
+                            </div>
+                            
+                            <h4 className="font-playfair text-lg text-white font-bold tracking-wide">
+                              {att.fullName}
+                            </h4>
+                            
+                            {att.registeredBy && (
+                              <p className="text-[10px] text-wedding-lightBeige/60 italic mt-0.5">
+                                (Registered by: {att.registeredBy})
+                              </p>
+                            )}
+
+                            {/* Serial Number Display */}
+                            <div className="mt-4 bg-black/40 border border-wedding-gold/15 px-4 py-2 rounded-xl">
+                              <span className="text-[9px] text-wedding-goldLight/80 uppercase tracking-widest block">Entry Pass Code</span>
+                              <span className="font-mono text-sm text-wedding-gold font-bold tracking-wider mt-0.5 block">
+                                {att.serialNumber}
+                              </span>
+                            </div>
+
+                            {/* Copy Link & WhatsApp Share */}
+                            <div className="mt-4 flex flex-col sm:flex-row gap-2 w-full justify-center">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(personalLink);
+                                  alert("Link copied! You can now send it to them on WhatsApp. 🎉");
+                                }}
+                                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-[#FAF8F5] text-xs font-semibold rounded-lg border border-wedding-gold/20 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                🔗 Copy Invite Link
+                              </button>
+                              
+                              <a
+                                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                                  `Hi ${att.fullName}, here is your personal entry pass & details for Ayodeji & Adesewa's wedding (AALOVESTORY2026). Click this link to view your pass: ${personalLink}`
+                                )}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="px-4 py-2 bg-[#25D366] hover:bg-[#20BA56] text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.965C16.588 1.977 14.13 1.953 12.006 1.953c-5.437 0-9.862 4.371-9.866 9.8.001 2.03.536 4.017 1.554 5.78l-.924 3.38 3.488-.915z"/>
+                                </svg>
+                                Share on WhatsApp
+                              </a>
+                            </div>
+
+                            {/* Download Button */}
+                            <button
+                              type="button"
+                              onClick={() => downloadAttendeeQRCard(att, invite?.familyName)}
+                              className="mt-3 px-5 py-2.5 bg-wedding-gold text-wedding-wineDark hover:bg-wedding-goldLight transition font-playfair font-bold text-xs tracking-wider rounded-lg border border-wedding-goldLight/20 flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Download className="w-3.5 h-3.5" /> Download QR Card (PNG)
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
 
-              {/* QR Code Container */}
-              {rsvpData?.qrCode && (
-                <div className="bg-white p-3 rounded-2xl inline-block border-2 border-wedding-gold/40 shadow-xl">
-                  <img src={rsvpData.qrCode} alt="Entry QR Code" className="w-40 h-40" />
-                </div>
-              )}
-
-              <div className="max-w-md bg-[#240A0C]/50 border border-wedding-gold/15 p-4 rounded-xl text-left">
+              <div className="max-w-md bg-[#240A0C]/50 border border-wedding-gold/15 p-4 rounded-xl text-left mt-4">
                 <p className="text-[11px] text-wedding-gold font-bold uppercase tracking-wider mb-2">Important Instructions:</p>
                 <ul className="text-[11px] text-wedding-lightBeige/90 space-y-1.5 list-disc pl-4">
-                  <li>Please **save or download this QR Code** to your device.</li>
-                  <li>Present this serial number or QR code to the check-in bouncers at the wedding venue entrance.</li>
-                  <li>The QR code authorizes entry for exactly **{rsvpData?.attendanceCount || invite?.maxGuests} guests**.</li>
+                  <li>Please **save or download the QR Card(s)** to your device.</li>
+                  <li>Present this serial number or QR card to the check-in bouncers at the wedding venue entrance.</li>
+                  <li>Each QR code card authorizes entry for **one registered guest**.</li>
                 </ul>
               </div>
-
-              {/* Download CTA */}
-              {rsvpData?.qrCode && (
-                <button
-                  onClick={downloadQRCode}
-                  className="px-6 py-2.5 bg-wedding-gold text-wedding-wineDark hover:bg-wedding-goldLight transition-all duration-300 font-playfair font-bold text-xs tracking-wider rounded-lg border border-wedding-goldLight/20 flex items-center justify-center gap-2 hover:shadow-lg"
-                >
-                  <Download className="w-4 h-4" /> DOWNLOAD QR CODE
-                </button>
-              )}
             </div>
           )}
         </div>
       </section>
 
       {/* 6. DONATION/SUPPORT SYSTEM */}
-      <section id="support" className="py-20 px-6 max-w-2xl mx-auto border-b border-wedding-gold/10 scroll-mt-20">
+      <section id="support" className="md:py-20 py-10 px-6 max-w-2xl mx-auto border-b border-wedding-gold/10 scroll-mt-20">
         <div className="text-center mb-12">
           <Gift className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
           <h2 className="font-playfair text-3xl text-wedding-wine tracking-wider font-bold">Support Our Wedding</h2>
@@ -715,69 +932,24 @@ export default function MainPage() {
           <div className="absolute bottom-2 right-2 w-6 h-6 border-b border-r border-wedding-gold/20"></div>
 
           {!donationSuccess ? (
-            <div className="space-y-6">
-              {/* Preset Amounts */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[5000, 10000, 25000, 50000].map((preset) => (
-                  <button
-                    key={preset}
-                    onClick={() => setDonationAmount(preset.toString())}
-                    className={`py-3 rounded-xl font-playfair border text-xs tracking-wider transition-all duration-200 ${
-                      donationAmount === preset.toString()
-                        ? 'bg-wedding-gold border-wedding-gold text-wedding-wineDark font-bold'
-                        : 'bg-[#240A0C]/50 border-wedding-gold/20 text-[#FAF8F5]/90 hover:border-wedding-gold/50'
-                    }`}
-                  >
-                    ₦{preset.toLocaleString()}
-                  </button>
-                ))}
-              </div>
-
-              {/* Custom Input */}
-              <div className="space-y-2 text-left">
-                <label className="block text-sm font-medium text-wedding-lightBeige">Or enter a custom amount (NGN)</label>
-                <input
-                  type="number"
-                  placeholder="Enter custom amount ₦"
-                  value={donationAmount}
-                  onChange={(e) => setDonationAmount(e.target.value)}
-                  className="w-full bg-white border border-wedding-gold/30 rounded-xl px-4 py-3 text-wedding-wineDark font-medium focus:outline-none focus:border-wedding-gold"
-                />
-              </div>
-
-              {/* Name Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-wedding-lightBeige">Your Name (Optional)</label>
-                  <input
-                    type="text"
-                    placeholder="Enter your name"
-                    value={donorName}
-                    disabled={isAnonymous}
-                    onChange={(e) => setDonorName(e.target.value)}
-                    className="w-full bg-white border border-wedding-gold/20 rounded-xl px-3 py-2.5 text-sm text-wedding-wineDark font-medium focus:outline-none focus:border-wedding-gold disabled:opacity-40"
-                  />
+            <div className="space-y-8 py-4">
+              {/* Gift message */}
+              <div className="space-y-3">
+                <div className="w-14 h-14 mx-auto rounded-full bg-wedding-emerald/20 border border-wedding-emerald/40 flex items-center justify-center">
+                  <Gift className="w-7 h-7 text-wedding-emeraldLight" />
                 </div>
-
-                <div className="flex items-center gap-2 pt-6 sm:pt-8 pl-1">
-                  <input
-                    type="checkbox"
-                    id="anonymous"
-                    checked={isAnonymous}
-                    onChange={(e) => setIsAnonymous(e.target.checked)}
-                    className="rounded border-wedding-gold/30 bg-[#240A0C] text-wedding-wine focus:ring-0 focus:ring-offset-0 w-5 h-5"
-                  />
-                  <label htmlFor="anonymous" className="text-sm text-wedding-lightBeige/85 cursor-pointer select-none">Send Anonymously</label>
-                </div>
+                <p className="text-[#FAF8F5]/80 text-sm leading-relaxed max-w-sm mx-auto">
+                  Your generosity means the world to us. You may give any amount you wish — securely through our Paystack page.
+                </p>
+                <p className="text-[#FAF8F5]/50 text-xs tracking-wider">Accepts cards, bank transfer & USSD</p>
               </div>
 
               {/* Support Submit */}
               <button
                 onClick={handleSupportPayment}
-                disabled={paymentLoading}
-                className="w-full py-4 bg-wedding-emerald hover:bg-wedding-emeraldLight text-white hover:shadow-lg transition-all duration-300 font-playfair font-bold tracking-widest text-sm rounded-xl border border-wedding-emerald/40 hover:border-wedding-gold flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
+                className="w-full py-4 bg-wedding-emerald hover:bg-wedding-emeraldLight text-white hover:shadow-[0_0_20px_rgba(34,139,34,0.3)] transition-all duration-300 font-playfair font-bold tracking-widest text-sm rounded-xl border border-wedding-emerald/40 hover:border-wedding-gold flex items-center justify-center gap-2"
               >
-                {paymentLoading ? 'PROCEEDING TO CHECKOUT...' : 'SUPPORT WITH PAYSTACK'}
+                <Gift className="w-4 h-4" /> SEND A GIFT VIA PAYSTACK
               </button>
             </div>
           ) : (
@@ -799,7 +971,7 @@ export default function MainPage() {
       </section>
 
       {/* 7. PHOTO GALLERY SECTION */}
-      <section id="gallery" className="py-20 px-6 max-w-5xl mx-auto">
+      <section id="gallery" className="md:py-20 py-10 px-6 max-w-5xl mx-auto">
         <div className="text-center mb-12">
           <Camera className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
           <h2 className="font-playfair text-3xl text-wedding-wine tracking-wider font-bold">Wedding Photo Gallery</h2>
@@ -852,7 +1024,7 @@ export default function MainPage() {
         </div>
 
         {/* Gallery Grid */}
-        <div>
+        {/* <div>
           <h3 className="font-playfair text-xl text-wedding-wine font-bold mb-6 text-center">Moments Captured</h3>
           
           {photos.length === 0 ? (
@@ -877,11 +1049,38 @@ export default function MainPage() {
               ))}
             </div>
           )}
+        </div> */}
+      </section>
+
+      {/* 8. WEDDING PROGRAMME SECTION */}
+      <section id="programme" className="md:py-20 py-10 px-6 max-w-4xl mx-auto border-b border-wedding-gold/10">
+        <div className="text-center mb-10">
+          <Calendar className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
+          <h2 className="font-playfair text-3xl sm:text-4xl text-wedding-wine tracking-wider font-bold">Wedding Programme</h2>
+          <p className="text-sm text-wedding-wineDark/80 italic mt-1">
+            Ayodeji &amp; Adesewa — October 10, 2026 · SRV Hall, Ilorin, Kwara
+          </p>
+          <div className="w-16 h-[1px] bg-wedding-gold/40 mx-auto mt-4"></div>
+        </div>
+
+        <div className="relative">
+          {/* Decorative corner accents */}
+          <div className="absolute -top-2 -left-2 w-8 h-8 border-t-2 border-l-2 border-wedding-gold/40 rounded-tl-lg z-10" />
+          <div className="absolute -top-2 -right-2 w-8 h-8 border-t-2 border-r-2 border-wedding-gold/40 rounded-tr-lg z-10" />
+          <div className="absolute -bottom-2 -left-2 w-8 h-8 border-b-2 border-l-2 border-wedding-gold/40 rounded-bl-lg z-10" />
+          <div className="absolute -bottom-2 -right-2 w-8 h-8 border-b-2 border-r-2 border-wedding-gold/40 rounded-br-lg z-10" />
+
+          <img
+            src="/wedding_programme.png"
+            alt="AALOVESTORY2026 Wedding Programme"
+            className="w-full rounded-2xl border border-wedding-gold/20 shadow-2xl object-contain"
+            loading="lazy"
+          />
         </div>
       </section>
 
       {/* Decorative footer */}
-      <footer className="py-12 border-t border-wedding-gold/10 text-center bg-wedding-darkCard/40">
+      <footer className="md:py-20 py-10 border-t border-wedding-gold/10 text-center bg-wedding-darkCard/40">
         <h2 className="font-playfair text-xl text-gold-gradient tracking-widest">AALOVESTORY2026</h2>
         <p className="text-xs text-wedding-beige/60 font-poppins mt-2 tracking-wider">Ayodeji & Adesewa — Forever & Always</p>
         <p className="text-[9px] text-wedding-gold/30 font-poppins tracking-[0.2em] mt-8 uppercase">© 2026 AALOVESTORY. All Rights Reserved.</p>

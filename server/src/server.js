@@ -27,7 +27,7 @@ app.use(helmet({
   crossOriginResourcePolicy: false, // Allow local images to be loaded by frontend
 }));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173' || 'https://wedding-invitation-9gox.onrender.com',
   credentials: true
 }));
 
@@ -62,6 +62,17 @@ app.use('/api/admin', adminRoutes);
 // Health Check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Wedding invitation server is running perfectly.' });
+});
+
+// DB heartbeat — wakes up Supabase connection pool & increments counter
+app.get('/api/aalovestory2026heart', async (_req, res) => {
+  try {
+    await prisma.$executeRaw`UPDATE aalovestory2026heart SET last_ping = CURRENT_TIMESTAMP, counter = counter + 1 WHERE id = 1`;
+    res.status(200).json({ status: 'alive', heart: 'beating' });
+  } catch (err) {
+    console.error('[Heart] Heartbeat check failed:', err.message);
+    res.status(500).json({ error: 'Heartbeat failed' });
+  }
 });
 
 // Seed default users if they don't exist

@@ -2,7 +2,8 @@ import prisma from '../config/prismaClient.js';
 import QRCode from 'qrcode';
 
 // Helper to generate a random unique serial number: AAL-XXXXXX
-async function generateUniqueSerial() {
+async function generateUniqueSerial(txClient) {
+  const client = txClient || prisma;
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let isUnique = false;
   let serial = '';
@@ -14,16 +15,53 @@ async function generateUniqueSerial() {
     }
     serial = `AAL-${code}`;
 
-    // Check uniqueness in database
-    const existing = await prisma.rSVP.findUnique({
+    // Check uniqueness in database (both RSVP and Attendee)
+    const existingRsvp = await client.rSVP.findUnique({
       where: { serialNumber: serial }
     });
-    if (!existing) {
+    const existingAttendee = await client.attendee.findUnique({
+      where: { serialNumber: serial }
+    });
+    if (!existingRsvp && !existingAttendee) {
       isUnique = true;
     }
   }
 
   return serial;
+}
+
+// Helper to generate a random unique attendee serial number: AAL-XXXXXX
+async function generateUniqueAttendeeSerial(txClient) {
+  return generateUniqueSerial(txClient);
+}
+
+// Helper to generate a random unique attendee token: att-XXXXXXXXXX
+async function generateUniqueAttendeeToken(txClient) {
+  const client = txClient || prisma;
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let isUnique = false;
+  let token = '';
+
+  while (!isUnique) {
+    let code = '';
+    for (let i = 0; i < 10; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    token = `att-${code}`;
+
+    // Check uniqueness in database (Invite and Attendee)
+    const existingInvite = await client.invite.findUnique({
+      where: { inviteToken: token }
+    });
+    const existingAttendee = await client.attendee.findUnique({
+      where: { attendeeToken: token }
+    });
+    if (!existingInvite && !existingAttendee) {
+      isUnique = true;
+    }
+  }
+
+  return token;
 }
 
 export async function submitRSVP(req, res) {
@@ -78,12 +116,23 @@ export async function submitRSVP(req, res) {
         }
       });
 
-      // 2. Create Attendees
-      const attendeeData = attendees.map(att => ({
-        rsvpId: rsvp.id,
-        fullName: att.fullName.trim(),
-        phoneNumber: att.phoneNumber ? att.phoneNumber.trim() : null
-      }));
+      // 2. Create Attendees with unique serials, tokens, and registeredBy info
+      const attendeeData = [];
+      for (let i = 0; i < attendees.length; i++) {
+        const att = attendees[i];
+        const attSerial = await generateUniqueAttendeeSerial(tx);
+        const attToken = await generateUniqueAttendeeToken(tx);
+        const registeredBy = i > 0 ? attendees[0].fullName.trim() : null;
+
+        attendeeData.push({
+          rsvpId: rsvp.id,
+          fullName: att.fullName.trim(),
+          phoneNumber: att.phoneNumber ? att.phoneNumber.trim() : null,
+          serialNumber: attSerial,
+          attendeeToken: attToken,
+          registeredBy: registeredBy
+        });
+      }
 
       await tx.attendee.createMany({
         data: attendeeData
@@ -103,7 +152,8 @@ export async function submitRSVP(req, res) {
       serialNumber: result.rsvp.serialNumber,
       qrCode: result.rsvp.qrCode,
       attendanceCount: result.rsvp.attendanceCount,
-      familyName: invite.familyName
+      familyName: invite.familyName,
+      attendees: result.attendees
     });
   } catch (error) {
     console.error('Error submitting RSVP:', error);
