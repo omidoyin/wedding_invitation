@@ -64,10 +64,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Wedding invitation server is running perfectly.' });
 });
 
-// DB heartbeat — wakes up Supabase connection pool & increments counter
+// DB heartbeat — wakes up Supabase connection pool
 app.get('/api/aalovestory2026heart', async (_req, res) => {
   try {
-    await prisma.$executeRaw`UPDATE aalovestory2026heart SET last_ping = CURRENT_TIMESTAMP, counter = counter + 1 WHERE id = 1`;
+    // Ping the DB using a lightweight Prisma query against an existing table
+    await prisma.admin.count();
     res.status(200).json({ status: 'alive', heart: 'beating' });
   } catch (err) {
     console.error('[Heart] Heartbeat check failed:', err.message);
