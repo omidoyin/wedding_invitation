@@ -237,3 +237,36 @@ export async function checkOut(req, res) {
     res.status(500).json({ error: 'Internal server error' });
   }
 }
+
+export async function assignSeat(req, res) {
+  const { serialNumber, seatNumber } = req.body;
+
+  if (!serialNumber || !seatNumber) {
+    return res.status(400).json({ error: 'Serial number and seat number are required.' });
+  }
+
+  try {
+    const attendee = await prisma.attendee.findUnique({
+      where: { serialNumber: serialNumber.trim() }
+    });
+
+    if (!attendee) {
+      return res.status(404).json({ error: 'Attendee not found for this serial number.' });
+    }
+
+    const updated = await prisma.attendee.update({
+      where: { id: attendee.id },
+      data: { seatNumber: seatNumber.trim() }
+    });
+
+    res.json({
+      message: `Seat ${seatNumber} assigned to ${updated.fullName}.`,
+      serialNumber: updated.serialNumber,
+      fullName: updated.fullName,
+      seatNumber: updated.seatNumber
+    });
+  } catch (error) {
+    console.error('Error assigning seat:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}

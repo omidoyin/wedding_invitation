@@ -206,6 +206,7 @@ export async function exportGuests(req, res) {
       { header: 'Phone Number', key: 'phoneNumber', width: 18 },
       { header: 'Family / Invite Group', key: 'familyName', width: 25 },
       { header: 'Serial Number', key: 'serialNumber', width: 15 },
+      { header: 'Seat Number', key: 'seatNumber', width: 15 },
       { header: 'Bouncer Check-In Status', key: 'checkInStatus', width: 18 }
     ];
     attendeesSheet.getRow(1).font = { bold: true };
@@ -227,6 +228,7 @@ export async function exportGuests(req, res) {
         phoneNumber: att.phoneNumber || 'N/A',
         familyName: att.rsvp.invite.familyName,
         serialNumber: att.serialNumber,
+        seatNumber: att.seatNumber || 'Not Assigned',
         checkInStatus: att.checkedIn ? 'Checked In' : 'Not Checked In'
       });
     });

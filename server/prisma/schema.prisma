@@ -48,6 +48,7 @@ model Attendee {
   checkInPhoto    String?
   checkedOut      Boolean   @default(false)
   checkedOutAt    DateTime?
+  seatNumber      String?
   createdAt       DateTime @default(now())
   rsvp            RSVP     @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
 }

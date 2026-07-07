@@ -51,6 +51,9 @@ export default function MainPage() {
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+ 
+  const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
   // React Hook Form for RSVP
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
@@ -201,36 +204,82 @@ export default function MainPage() {
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
   };
+   const handleUploadPhoto = async (e) => {
+      e.preventDefault();
+      if (!selectedFile) {
+        alert('Please select an image file to upload.');
+        return;
+      }
+      if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+        setUploadMsg('Upload is not configured yet. Please contact the hosts.');
+        return;
+      }
+      setUploadLoading(true);
+      setUploadMsg('');
+  
+      try {
+        // Step 1: Upload directly to Cloudinary from the browser
+        const cloudinaryForm = new FormData();
+        cloudinaryForm.append('file', selectedFile);
+        cloudinaryForm.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        cloudinaryForm.append('folder', 'gallery');
+  
+        const cloudinaryRes = await axios.post(
+          `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+          cloudinaryForm
+        );
+  
+        const { secure_url, public_id } = cloudinaryRes.data;
+  
+        // Step 2: Save only the URL + metadata to our backend database
+        const res = await axios.post(`${API_URL}/gallery/upload`, {
+          imageUrl: secure_url,
+          cloudinaryId: public_id,
+          uploadedBy: guestName
+        });
+  
+        setUploadMsg(res.data.message);
+        setSelectedFile(null);
+        setGuestName('');
+        document.getElementById('file-upload').value = '';
+        // fetchPhotos();
+      } catch (err) {
+        console.error(err);
+        setUploadMsg('Failed to upload photo. Only image files (jpg, png, webp) under 10MB are accepted.');
+      } finally {
+        setUploadLoading(false);
+      }
+    };
 
-  const handleUploadPhoto = async (e) => {
-    e.preventDefault();
-    if (!selectedFile) {
-      alert('Please select an image file to upload.');
-      return;
-    }
-    setUploadLoading(true);
-    setUploadMsg('');
+  // const handleUploadPhoto = async (e) => {
+  //   e.preventDefault();
+  //   if (!selectedFile) {
+  //     alert('Please select an image file to upload.');
+  //     return;
+  //   }
+  //   setUploadLoading(true);
+  //   setUploadMsg('');
 
-    const formData = new FormData();
-    formData.append('photo', selectedFile);
-    formData.append('uploadedBy', guestName);
+  //   const formData = new FormData();
+  //   formData.append('photo', selectedFile);
+  //   formData.append('uploadedBy', guestName);
 
-    try {
-      const res = await axios.post(`${API_URL}/gallery/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      setUploadMsg(res.data.message);
-      setSelectedFile(null);
-      setGuestName('');
-      // Reset file input
-      document.getElementById('file-upload').value = '';
-    } catch (err) {
-      console.error('Upload photo error:', err);
-      setUploadMsg('Failed to upload photo. Only image files under 10MB are accepted.');
-    } finally {
-      setUploadLoading(false);
-    }
-  };
+  //   try {
+  //     const res = await axios.post(`${API_URL}/gallery/upload`, formData, {
+  //       headers: { 'Content-Type': 'multipart/form-data' }
+  //     });
+  //     setUploadMsg(res.data.message);
+  //     setSelectedFile(null);
+  //     setGuestName('');
+  //     // Reset file input
+  //     document.getElementById('file-upload').value = '';
+  //   } catch (err) {
+  //     console.error('Upload photo error:', err);
+  //     setUploadMsg('Failed to upload photo. Only image files under 10MB are accepted.');
+  //   } finally {
+  //     setUploadLoading(false);
+  //   }
+  // };
 
   const downloadQRCode = () => {
     if (!rsvpData?.qrCode) return;

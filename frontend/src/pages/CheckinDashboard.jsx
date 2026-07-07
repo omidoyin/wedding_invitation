@@ -32,6 +32,11 @@ export default function CheckinDashboard() {
   const [qrScannerActive, setQrScannerActive] = useState(false);
   const [qrScannerError, setQrScannerError] = useState('');
 
+  // Seat number state
+  const [seatInput, setSeatInput] = useState('');
+  const [seatLoading, setSeatLoading] = useState(false);
+  const [seatMsg, setSeatMsg] = useState('');
+
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -266,6 +271,27 @@ export default function CheckinDashboard() {
     setFileFallback(null);
     setFileUrl('');
     setError('');
+    setSeatInput('');
+    setSeatMsg('');
+  };
+
+  const handleAssignSeat = async (attendee) => {
+    if (!seatInput.trim()) return;
+    setSeatLoading(true);
+    setSeatMsg('');
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await axios.patch(`${API_URL}/checkin/seat`, {
+        serialNumber: attendee.serialNumber,
+        seatNumber: seatInput.trim()
+      }, { headers });
+      setSeatMsg(`✅ Seat ${res.data.seatNumber} assigned!`);
+      performSearch(searchQuery);
+    } catch (err) {
+      setSeatMsg(err.response?.data?.error || 'Failed to assign seat.');
+    } finally {
+      setSeatLoading(false);
+    }
   };
 
   return (
@@ -396,6 +422,11 @@ export default function CheckinDashboard() {
                             {att.checkedOut && !att.checkedIn && (
                               <div className="mt-2 text-[10px] text-wedding-wineLight flex items-center gap-1">
                                 <ShieldAlert className="w-3.5 h-3.5" /> Checked Out at {att.checkedOutAt ? new Date(att.checkedOutAt).toLocaleTimeString() : ''}
+                              </div>
+                            )}
+                            {att.seatNumber && (
+                              <div className="mt-1.5 text-[10px] text-[#E5C04A] flex items-center gap-1">
+                                🪑 Seat: <span className="font-bold font-mono">{att.seatNumber}</span>
                               </div>
                             )}
                           </div>
@@ -549,6 +580,33 @@ export default function CheckinDashboard() {
                     className="hidden"
                   />
                 </label>
+              </div>
+
+
+              {/* Seat Number Assignment */}
+              <div className="pt-2 border-t border-wedding-gold/10">
+                <label className="text-[10px] text-[#E5C04A] uppercase tracking-widest block mb-2 font-semibold">
+                  🪑 Assign Seat Number <span className="text-[#FAF8F5]/40 font-normal normal-case">(optional)</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. A12, Table 5, Row 3"
+                    value={seatInput}
+                    onChange={(e) => setSeatInput(e.target.value)}
+                    className="flex-1 bg-[#150709] border border-wedding-gold/20 rounded-lg px-3 py-2 text-xs text-[#FAF8F5] focus:outline-none focus:border-wedding-gold placeholder:text-[#FAF8F5]/30"
+                  />
+                  <button
+                    onClick={() => handleAssignSeat(activeCheckinAttendee || { serialNumber: activeCheckinRsvp?.serialNumber })}
+                    disabled={seatLoading || !seatInput.trim()}
+                    className="px-4 py-2 bg-wedding-wine/70 hover:bg-wedding-wine text-white font-playfair text-[10px] tracking-wider rounded-lg border border-wedding-gold/20 disabled:opacity-40 transition cursor-pointer shrink-0"
+                  >
+                    {seatLoading ? '...' : 'ASSIGN'}
+                  </button>
+                </div>
+                {seatMsg && (
+                  <p className="text-[10px] mt-1.5 text-wedding-emeraldLight">{seatMsg}</p>
+                )}
               </div>
 
               {/* Complete Checkin CTA */}
