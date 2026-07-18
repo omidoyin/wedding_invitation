@@ -521,8 +521,8 @@ export default function MainPage() {
       </section>
 
       {/* ── COUPLE PHOTO CAROUSEL ── */}
-      <section className="w-full overflow-hidden" aria-label="Couple Photos Carousel">
-        <div className="relative w-full" style={{ height: 'clamp(350px, 55vw, 560px)' }}>
+      <section className="w-full max-w-6xl mx-auto md:px-6 overflow-hidden md:my-8" aria-label="Couple Photos Carousel">
+        <div className="relative w-full md:rounded-3xl overflow-hidden shadow-2xl" style={{ height: 'clamp(350px, 55vw, 560px)' }}>
           {couplePhotos.map((src, idx) => (
             <motion.div
               key={src}
@@ -741,7 +741,7 @@ export default function MainPage() {
       </section>
 
       {/* 5. RSVP SECTION */}
-      <section id="rsvp" className="md:py-20 py-10 px-6 max-w-2xl mx-auto border-b border-wedding-gold/10 scroll-mt-20">
+      <section id="rsvp" className={`md:py-20 py-10 px-6 mx-auto border-b border-wedding-gold/10 scroll-mt-20 transition-all duration-500 ${rsvpSuccess ? 'max-w-4xl' : 'max-w-2xl'}`}>
         <div className="text-center mb-12">
           <Heart className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
           <h2 className="font-playfair text-3xl text-wedding-wine tracking-wider font-bold">RSVP</h2>
@@ -908,7 +908,7 @@ export default function MainPage() {
                   }
 
                   return (
-                    <div className="grid grid-cols-1 gap-6 max-w-lg mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
                       {listToShow.map((att) => {
                         // Generate copyable link
                         const personalLink = `${window.location.origin}/invite/${att.attendeeToken}`;
@@ -1171,7 +1171,7 @@ export default function MainPage() {
 
       {/* Sticky Seating Banner */}
       {invite && invite.rsvpSubmitted && (
-        <div className="fixed bottom-4 left-4 right-4 md:left-6 md:right-24 max-w-4xl z-50 bg-[#722F37] border border-[#D4AF37]/50 p-4 sm:p-5 rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.6)] flex flex-col md:flex-row items-center justify-between gap-4 animate-slide-up text-[#FAF8F5] select-none">
+        <div className="fixed bottom-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-4xl z-50 bg-[#722F37] border border-[#D4AF37]/50 p-4 sm:p-5 rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.6)] flex flex-col md:flex-row items-center justify-between gap-4 animate-slide-up text-[#FAF8F5] select-none">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-[#D4AF37]/30 text-lg">
               🪑
