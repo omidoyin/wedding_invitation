@@ -65,7 +65,7 @@ async function generateUniqueAttendeeToken(txClient) {
 }
 
 export async function submitRSVP(req, res) {
-  const { inviteId, attendees } = req.body;
+  const { inviteId, attendees, anyChildren, childrenCount } = req.body;
 
   if (!inviteId || !Array.isArray(attendees) || attendees.length === 0) {
     return res.status(400).json({ error: 'Invite ID and attendee list are required.' });
@@ -112,7 +112,9 @@ export async function submitRSVP(req, res) {
           attendanceCount: attendees.length,
           serialNumber: serialNumber,
           qrCode: qrCodeDataUrl,
-          checkedIn: false
+          checkedIn: false,
+          anyChildren: anyChildren || false,
+          childrenCount: childrenCount ? parseInt(childrenCount) : 0
         }
       });
 

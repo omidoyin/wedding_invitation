@@ -58,7 +58,9 @@ export default function MainPage() {
   // React Hook Form for RSVP
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
-      attendees: [{ fullName: '', phoneNumber: '' }]
+      attendees: [{ fullName: '', phoneNumber: '' }],
+      anyChildren: false,
+      childrenCount: 1
     }
   });
 
@@ -68,6 +70,7 @@ export default function MainPage() {
   });
 
   const attendeeCount = watch('attendees')?.length || 1;
+  const anyChildren = watch('anyChildren');
 
   // Fetch initial details
   useEffect(() => {
@@ -143,7 +146,9 @@ export default function MainPage() {
     try {
       const res = await axios.post(`${API_URL}/rsvp`, {
         inviteId: invite.id,
-        attendees: data.attendees
+        attendees: data.attendees,
+        anyChildren: data.anyChildren,
+        childrenCount: data.anyChildren ? parseInt(data.childrenCount) : 0
       });
       setRsvpData(res.data);
       setRsvpSuccess(true);
@@ -814,6 +819,35 @@ export default function MainPage() {
                 ))}
               </div>
 
+              {/* Optional Children attending question */}
+              <div className="space-y-3 p-4 bg-[#240A0C]/35 border border-wedding-gold/15 rounded-xl select-none">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="anyChildren"
+                    {...register('anyChildren')}
+                    className="w-4 h-4 rounded text-wedding-wine bg-white border-wedding-gold/30 focus:ring-wedding-gold cursor-pointer"
+                  />
+                  <label htmlFor="anyChildren" className="text-xs font-semibold text-wedding-lightBeige cursor-pointer">
+                    Any children attending with you?
+                  </label>
+                </div>
+
+                {anyChildren && (
+                  <div className="space-y-1.5 pl-7 animate-fade-in">
+                    <label className="block text-[11px] font-medium text-wedding-goldLight">Number of children attending:</label>
+                    <select
+                      {...register('childrenCount')}
+                      className="bg-white border border-wedding-gold/30 rounded-lg px-3 py-1.5 text-xs text-wedding-wineDark font-semibold focus:outline-none focus:border-wedding-gold"
+                    >
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <option key={n} value={n}>{n} {n === 1 ? 'Child' : 'Children'}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
               {/* Submit button */}
               <button
                 type="submit"
@@ -1134,6 +1168,62 @@ export default function MainPage() {
         <p className="text-xs text-wedding-beige/60 font-poppins mt-2 tracking-wider">Ayodeji & Adesewa — Forever & Always</p>
         <p className="text-[9px] text-wedding-gold/30 font-poppins tracking-[0.2em] mt-8 uppercase">© 2026 AALOVESTORY. All Rights Reserved.</p>
       </footer>
+
+      {/* Sticky Seating Banner */}
+      {invite && invite.rsvpSubmitted && (
+        <div className="fixed bottom-4 left-4 right-4 md:left-6 md:right-24 max-w-4xl z-50 bg-[#722F37] border border-[#D4AF37]/50 p-4 sm:p-5 rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.6)] flex flex-col md:flex-row items-center justify-between gap-4 animate-slide-up text-[#FAF8F5] select-none">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-[#D4AF37]/30 text-lg">
+              🪑
+            </div>
+            <div>
+              <h4 className="text-xs uppercase tracking-[0.2em] text-[#D4AF37] font-bold">Seat Status</h4>
+              <p className="text-[11px] opacity-80 mt-0.5">
+                {invite.seatingPublished ? 'Your seating arrangement has been finalized.' : 'Seating assignments will be released soon.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-black/30 border border-[#D4AF37]/20 px-5 py-2.5 rounded-xl text-center md:text-right shrink-0 min-w-[200px]">
+            {invite.seatingPublished ? (
+              (() => {
+                const attendees = invite.rsvp?.attendees || rsvpData?.attendees || [];
+                const tableNames = [...new Set(attendees.filter(a => a.table).map(a => a.table.name))];
+                const seatNumbers = attendees.filter(a => a.seatNumber).map(a => a.seatNumber);
+
+                if (tableNames.length > 0) {
+                  return (
+                    <div>
+                      <span className="text-[10px] text-[#D4AF37] uppercase tracking-wider block font-semibold">Assigned Location</span>
+                      <span className="text-base font-bold font-playfair tracking-wide text-white">
+                        {tableNames.join(' & ')}
+                      </span>
+                      {seatNumbers.length > 0 && (
+                        <span className="text-[10px] text-wedding-lightBeige/90 font-mono block mt-0.5">
+                          {seatNumbers.length === 1 ? `Seat ${seatNumbers[0]}` : `Seats ${seatNumbers.join(', ')}`}
+                        </span>
+                      )}
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div>
+                      <span className="text-[10px] text-[#D4AF37] uppercase tracking-wider block font-semibold">Assigned Location</span>
+                      <span className="text-sm font-semibold italic text-wedding-lightBeige/70">
+                        Table not assigned yet
+                      </span>
+                    </div>
+                  );
+                }
+              })()
+            ) : (
+              <p className="text-xs font-semibold text-wedding-lightBeige text-center leading-relaxed">
+                Your seat number will be available one week before the wedding. Please revisit this link to view your table.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

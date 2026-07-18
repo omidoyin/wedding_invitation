@@ -10,7 +10,11 @@ export async function getInviteByToken(req, res) {
       include: { 
         rsvp: {
           include: {
-            attendees: true
+            attendees: {
+              include: {
+                table: true
+              }
+            }
           }
         }
       }
@@ -27,7 +31,11 @@ export async function getInviteByToken(req, res) {
           rsvp: {
             include: {
               invite: true,
-              attendees: true
+              attendees: {
+                include: {
+                  table: true
+                }
+              }
             }
           }
         }

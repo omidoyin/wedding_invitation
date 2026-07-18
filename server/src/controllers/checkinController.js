@@ -24,7 +24,11 @@ export async function searchGuest(req, res) {
       },
       include: {
         invite: true,
-        attendees: true
+        attendees: {
+          include: {
+            table: true
+          }
+        }
       }
     });
 
@@ -111,7 +115,11 @@ export async function checkIn(req, res) {
         rsvp: {
           include: {
             invite: true,
-            attendees: true
+            attendees: {
+              include: {
+                table: true
+              }
+            }
           }
         }
       }

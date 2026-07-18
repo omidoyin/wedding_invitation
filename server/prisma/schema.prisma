@@ -15,6 +15,8 @@ model Invite {
   maxGuests         Int
   invitationOpened  Boolean   @default(false)
   rsvpSubmitted     Boolean   @default(false)
+  side              String    @default("Neutral") // Bride, Groom, Neutral
+  seatingPublished  Boolean   @default(false)
   createdAt         DateTime  @default(now())
   rsvp              RSVP?
 }
@@ -30,6 +32,8 @@ model RSVP {
   checkInPhoto      String?
   checkedOut        Boolean   @default(false)
   checkedOutAt      DateTime?
+  anyChildren       Boolean   @default(false)
+  childrenCount     Int       @default(0)
   createdAt         DateTime  @default(now())
   invite            Invite    @relation(fields: [inviteId], references: [id], onDelete: Cascade)
   attendees         Attendee[]
@@ -48,6 +52,8 @@ model Attendee {
   checkInPhoto    String?
   checkedOut      Boolean   @default(false)
   checkedOutAt    DateTime?
+  tableId         Int?
+  table           Table?   @relation(fields: [tableId], references: [id], onDelete: SetNull)
   seatNumber      String?
   createdAt       DateTime @default(now())
   rsvp            RSVP     @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
@@ -77,4 +83,14 @@ model Admin {
   password        String
   role            String
   createdAt       DateTime  @default(now())
+}
+
+model Table {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  capacity    Int
+  side        String     @default("Neutral") // Bride, Groom, Neutral
+  category    String?    // E.g. VIP, Bride's family, etc.
+  createdAt   DateTime   @default(now())
+  attendees   Attendee[]
 }

@@ -62,7 +62,7 @@ export async function login(req, res) {
 }
 
 export async function createInvite(req, res) {
-  const { familyName, category, maxGuests } = req.body;
+  const { familyName, category, maxGuests, side } = req.body;
 
   if (!familyName || !category || !maxGuests) {
     return res.status(400).json({ error: 'Family name, category, and max guests are required.' });
@@ -76,7 +76,8 @@ export async function createInvite(req, res) {
         familyName: familyName.trim(),
         category: category.trim(),
         maxGuests: parseInt(maxGuests),
-        inviteToken: token
+        inviteToken: token,
+        side: side ? side.trim() : 'Neutral'
       }
     });
 
@@ -161,12 +162,16 @@ export async function exportGuests(req, res) {
       { header: 'ID', key: 'id', width: 10 },
       { header: 'Family Name', key: 'familyName', width: 25 },
       { header: 'Category', key: 'category', width: 15 },
+      { header: 'Side', key: 'side', width: 15 },
       { header: 'Max Allowed Guests', key: 'maxGuests', width: 18 },
       { header: 'RSVP Status', key: 'rsvpStatus', width: 15 },
       { header: 'Attendance Count', key: 'attendanceCount', width: 18 },
+      { header: 'Children Attending', key: 'childrenAttending', width: 18 },
+      { header: 'Children Count', key: 'childrenCount', width: 15 },
       { header: 'Serial Number', key: 'serialNumber', width: 15 },
       { header: 'Checked In', key: 'checkedIn', width: 12 },
       { header: 'Checked In At', key: 'checkedInAt', width: 22 },
+      { header: 'Seating Published', key: 'seatingPublished', width: 18 },
       { header: 'Check In Photo', key: 'checkInPhoto', width: 30 }
     ];
 
@@ -188,12 +193,16 @@ export async function exportGuests(req, res) {
         id: invite.id,
         familyName: invite.familyName,
         category: invite.category,
+        side: invite.side,
         maxGuests: invite.maxGuests,
         rsvpStatus: invite.rsvpSubmitted ? 'Submitted' : 'Pending',
         attendanceCount: invite.rsvp ? invite.rsvp.attendanceCount : 0,
+        childrenAttending: invite.rsvp ? (invite.rsvp.anyChildren ? 'Yes' : 'No') : 'N/A',
+        childrenCount: invite.rsvp ? invite.rsvp.childrenCount : 0,
         serialNumber: invite.rsvp ? invite.rsvp.serialNumber : 'N/A',
         checkedIn: invite.rsvp ? (invite.rsvp.checkedIn ? 'Yes' : 'No') : 'N/A',
         checkedInAt: invite.rsvp && invite.rsvp.checkedInAt ? invite.rsvp.checkedInAt.toISOString() : 'N/A',
+        seatingPublished: invite.seatingPublished ? 'Yes' : 'No',
         checkInPhoto: invite.rsvp && invite.rsvp.checkInPhoto ? invite.rsvp.checkInPhoto : 'N/A'
       });
     });
@@ -205,7 +214,9 @@ export async function exportGuests(req, res) {
       { header: 'Full Name', key: 'fullName', width: 25 },
       { header: 'Phone Number', key: 'phoneNumber', width: 18 },
       { header: 'Family / Invite Group', key: 'familyName', width: 25 },
+      { header: 'Side', key: 'side', width: 15 },
       { header: 'Serial Number', key: 'serialNumber', width: 15 },
+      { header: 'Assigned Table', key: 'tableName', width: 18 },
       { header: 'Seat Number', key: 'seatNumber', width: 15 },
       { header: 'Bouncer Check-In Status', key: 'checkInStatus', width: 18 }
     ];
@@ -213,6 +224,7 @@ export async function exportGuests(req, res) {
 
     const attendees = await prisma.attendee.findMany({
       include: {
+        table: true,
         rsvp: {
           include: {
             invite: true
@@ -227,7 +239,9 @@ export async function exportGuests(req, res) {
         fullName: att.fullName,
         phoneNumber: att.phoneNumber || 'N/A',
         familyName: att.rsvp.invite.familyName,
+        side: att.rsvp.invite.side,
         serialNumber: att.serialNumber,
+        tableName: att.table ? att.table.name : 'Not Assigned',
         seatNumber: att.seatNumber || 'Not Assigned',
         checkInStatus: att.checkedIn ? 'Checked In' : 'Not Checked In'
       });
@@ -287,6 +301,177 @@ export async function getPendingPhotos(req, res) {
     res.json(photos);
   } catch (error) {
     console.error('Error fetching pending photos:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function getTables(req, res) {
+  try {
+    const tables = await prisma.table.findMany({
+      include: {
+        attendees: {
+          include: {
+            rsvp: {
+              include: {
+                invite: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { name: 'asc' }
+    });
+    res.json(tables);
+  } catch (error) {
+    console.error('Error fetching tables:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function createTable(req, res) {
+  const { name, capacity, side, category } = req.body;
+  if (!name || !capacity) {
+    return res.status(400).json({ error: 'Table name and capacity are required.' });
+  }
+  try {
+    const table = await prisma.table.create({
+      data: {
+        name: name.trim(),
+        capacity: parseInt(capacity),
+        side: side ? side.trim() : 'Neutral',
+        category: category ? category.trim() : null
+      }
+    });
+    res.status(201).json(table);
+  } catch (error) {
+    console.error('Error creating table:', error);
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'A table with this name already exists.' });
+    }
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function updateTable(req, res) {
+  const { id } = req.params;
+  const { name, capacity, side, category } = req.body;
+  try {
+    const table = await prisma.table.update({
+      where: { id: parseInt(id) },
+      data: {
+        name: name ? name.trim() : undefined,
+        capacity: capacity ? parseInt(capacity) : undefined,
+        side: side ? side.trim() : undefined,
+        category: category !== undefined ? (category ? category.trim() : null) : undefined
+      }
+    });
+    res.json(table);
+  } catch (error) {
+    console.error('Error updating table:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function deleteTable(req, res) {
+  const { id } = req.params;
+  try {
+    await prisma.table.delete({
+      where: { id: parseInt(id) }
+    });
+    res.json({ message: 'Table deleted successfully.' });
+  } catch (error) {
+    console.error('Error deleting table:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function assignSeating(req, res) {
+  const { rsvpId, tableId, keepFamily, assignments } = req.body;
+
+  // --- Legacy mode: raw assignments array ---
+  if (Array.isArray(assignments)) {
+    try {
+      await prisma.$transaction(
+        assignments.map((asm) =>
+          prisma.attendee.update({
+            where: { id: asm.attendeeId },
+            data: { tableId: asm.tableId, seatNumber: asm.seatNumber }
+          })
+        )
+      );
+      return res.json({ message: 'Seating assignments updated successfully.' });
+    } catch (error) {
+      console.error('Error assigning seating (legacy):', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  // --- New mode: assign entire RSVP group to a table ---
+  if (!rsvpId) {
+    return res.status(400).json({ error: 'rsvpId is required.' });
+  }
+
+  try {
+    // Fetch the RSVP with all attendees
+    const rsvp = await prisma.rSVP.findUnique({
+      where: { id: parseInt(rsvpId) },
+      include: { attendees: true }
+    });
+    if (!rsvp) return res.status(404).json({ error: 'RSVP not found.' });
+
+    // If tableId is provided, check capacity
+    if (tableId !== null && tableId !== undefined) {
+      const table = await prisma.table.findUnique({
+        where: { id: parseInt(tableId) },
+        include: { attendees: true }
+      });
+      if (!table) return res.status(404).json({ error: 'Table not found.' });
+
+      // Count how many attendees from this rsvp are already at this table
+      const alreadyAtTable = table.attendees.filter(a => a.rsvpId === rsvp.id).length;
+      const slotsUsedByOthers = table.attendees.length - alreadyAtTable;
+      const newCount = keepFamily !== false ? rsvp.attendees.length : 1;
+
+      if (slotsUsedByOthers + newCount > table.capacity) {
+        return res.status(400).json({
+          error: `Table "${table.name}" doesn't have enough space. Capacity: ${table.capacity}, available: ${table.capacity - slotsUsedByOthers}, needed: ${newCount}.`
+        });
+      }
+    }
+
+    // Determine which attendees to update
+    const attendeesToUpdate = keepFamily !== false ? rsvp.attendees : rsvp.attendees.slice(0, 1);
+    const targetTableId = tableId !== null && tableId !== undefined ? parseInt(tableId) : null;
+
+    await prisma.$transaction(
+      attendeesToUpdate.map(att =>
+        prisma.attendee.update({
+          where: { id: att.id },
+          data: { tableId: targetTableId }
+        })
+      )
+    );
+
+    res.json({ message: 'Seating assignment updated successfully.' });
+  } catch (error) {
+    console.error('Error assigning seating:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function publishSeating(req, res) {
+  // Accept both 'published' and 'publish' for flexibility
+  const shouldPublish = req.body.published ?? req.body.publish;
+  if (shouldPublish === undefined || shouldPublish === null) {
+    return res.status(400).json({ error: 'published boolean is required.' });
+  }
+  try {
+    await prisma.invite.updateMany({
+      data: { seatingPublished: Boolean(shouldPublish) }
+    });
+    res.json({ message: `Seating assignments ${shouldPublish ? 'published' : 'hidden'} successfully.` });
+  } catch (error) {
+    console.error('Error publishing seating:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }
