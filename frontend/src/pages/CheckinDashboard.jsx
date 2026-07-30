@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Search, ShieldAlert, CheckCircle2, Camera, LogOut, 
-  X, RefreshCcw, UserCheck, AlertCircle, FileImage, QrCode
+  X, RefreshCcw, RefreshCw, UserCheck, AlertCircle, FileImage, QrCode
 } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 
@@ -623,7 +623,12 @@ export default function CheckinDashboard() {
                     disabled={seatLoading || !seatInput.trim()}
                     className="px-4 py-2 bg-wedding-wine hover:bg-wedding-wineDark text-white font-playfair text-[10px] tracking-wider rounded-lg border border-wedding-wine/20 disabled:opacity-40 transition cursor-pointer shrink-0 shadow-sm"
                   >
-                    {seatLoading ? '...' : 'ASSIGN'}
+                    {seatLoading ? (
+                      <span className="flex items-center gap-1.5">
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                        SAVING...
+                      </span>
+                    ) : 'ASSIGN'}
                   </button>
                 </div>
                 {seatMsg && (

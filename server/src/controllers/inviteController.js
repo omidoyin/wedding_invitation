@@ -28,6 +28,7 @@ export async function getInviteByToken(req, res) {
       const attendee = await prisma.attendee.findUnique({
         where: { attendeeToken: token },
         include: {
+          table: true,
           rsvp: {
             include: {
               invite: true,
@@ -51,7 +52,9 @@ export async function getInviteByToken(req, res) {
         fullName: attendee.fullName,
         serialNumber: attendee.serialNumber,
         attendeeToken: attendee.attendeeToken,
-        registeredBy: attendee.registeredBy
+        registeredBy: attendee.registeredBy,
+        seatNumber: attendee.seatNumber,
+        table: attendee.table
       };
 
       const parentInvite = attendee.rsvp.invite;
@@ -63,6 +66,7 @@ export async function getInviteByToken(req, res) {
         maxGuests: parentInvite.maxGuests,
         invitationOpened: parentInvite.invitationOpened,
         rsvpSubmitted: parentInvite.rsvpSubmitted,
+        seatingPublished: parentInvite.seatingPublished,
         rsvp: {
           id: attendee.rsvp.id,
           inviteId: attendee.rsvp.inviteId,
@@ -96,6 +100,7 @@ export async function getInviteByToken(req, res) {
       maxGuests: invite.maxGuests,
       invitationOpened: true,
       rsvpSubmitted: invite.rsvpSubmitted,
+      seatingPublished: Boolean(invite.seatingPublished),
       rsvp: invite.rsvp,
       isAttendee,
       currentAttendee

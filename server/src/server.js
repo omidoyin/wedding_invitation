@@ -30,7 +30,7 @@ app.use(helmet({
   crossOriginResourcePolicy: false, // Allow local images to be loaded by frontend
 }));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173' || 'https://wedding-invitation-9gox.onrender.com',
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173' || 'localhost:5000' || 'https://wedding-invitation-9gox.onrender.com',
   credentials: true
 }));
 

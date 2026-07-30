@@ -170,7 +170,7 @@ export default function EnvelopePage() {
               </h3>
 
               <div>
-                <p className="font-playfair text-xs sm:text-base italic text-wedding-wine">The</p>
+                {/* <p className="font-playfair text-xs sm:text-base italic text-wedding-wine">The</p> */}
                 <p className="font-playfair text-lg sm:text-2xl lg:text-3xl font-bold text-wedding-wineDark tracking-wide capitalize leading-tight">
                   {invite?.isAttendee ? invite.currentAttendee?.fullName : (invite?.familyName || 'Family')}
                 </p>

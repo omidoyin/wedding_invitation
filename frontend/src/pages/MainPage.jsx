@@ -665,7 +665,7 @@ export default function MainPage() {
           <div className="bg-wedding-wine text-white p-8 rounded-2xl border border-wedding-gold/30 text-center flex flex-col items-center shadow-xl">
             <MapPin className="w-8 h-8 text-wedding-gold mb-4 animate-pulse" />
             <h3 className="font-playfair text-lg text-wedding-gold font-bold mb-2">Where</h3>
-            <p className="text-sm text-wedding-lightBeige font-medium">SRV Hall</p>
+            <p className="text-sm text-wedding-lightBeige font-medium">Multi-Purpose Hall</p>
             <p className="text-xs text-[#FAF8F5]/80 mt-1">Ilorin, Kwara, Nigeria</p>
           </div>
 
@@ -1141,7 +1141,7 @@ export default function MainPage() {
           <Calendar className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
           <h2 className="font-playfair text-3xl sm:text-4xl text-wedding-wine tracking-wider font-bold">Wedding Programme</h2>
           <p className="text-sm text-wedding-wineDark/80 italic mt-1">
-            Ayodeji &amp; Adesewa — October 10, 2026 · SRV Hall, Ilorin, Kwara
+            Ayodeji &amp; Adesewa — October 10, 2026 · Multi-Purpose Hall, Ilorin, Kwara
           </p>
           <div className="w-16 h-[1px] bg-wedding-gold/40 mx-auto mt-4"></div>
         </div>

@@ -155,6 +155,7 @@ export async function submitRSVP(req, res) {
       qrCode: result.rsvp.qrCode,
       attendanceCount: result.rsvp.attendanceCount,
       familyName: invite.familyName,
+      seatingPublished: Boolean(invite.seatingPublished),
       attendees: result.attendees
     });
   } catch (error) {

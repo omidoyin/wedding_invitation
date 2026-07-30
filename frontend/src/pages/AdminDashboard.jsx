@@ -42,6 +42,7 @@ export default function AdminDashboard() {
   const [seatingPublished, setSeatingPublished] = useState(false);
   const [publishLoading, setPublishLoading]     = useState(false);
   const [assigningId, setAssigningId]           = useState(null); // rsvpId being assigned
+  const [savingTableId, setSavingTableId]       = useState(null); // tableId being saved to/from
   const [dragTarget, setDragTarget]             = useState(null); // tableId being dragged over
   const [filterSide, setFilterSide]             = useState('All');
   const [keepFamily, setKeepFamily]             = useState(true);
@@ -179,25 +180,33 @@ export default function AdminDashboard() {
 
   const handleAssignToTable = async (rsvpId, tableId) => {
     setAssigningId(rsvpId);
+    setSavingTableId(tableId);
     try {
       await axios.post(`${API_URL}/admin/seating/assign`, {
         rsvpId, tableId, keepFamily
       }, { headers });
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to assign guest.');
-    } finally { setAssigningId(null); }
+    } finally {
+      setAssigningId(null);
+      setSavingTableId(null);
+    }
   };
 
-  const handleUnassign = async (rsvpId) => {
+  const handleUnassign = async (rsvpId, sourceTableId = null) => {
     setAssigningId(rsvpId);
+    if (sourceTableId) setSavingTableId(sourceTableId);
     try {
       await axios.post(`${API_URL}/admin/seating/assign`, {
         rsvpId, tableId: null
       }, { headers });
-      loadDashboardData();
+      await loadDashboardData();
     } catch { alert('Failed to unassign guest.'); }
-    finally { setAssigningId(null); }
+    finally {
+      setAssigningId(null);
+      setSavingTableId(null);
+    }
   };
 
   const handlePublishToggle = async () => {
@@ -540,16 +549,37 @@ export default function AdminDashboard() {
                       const pct = Math.round((occupied / tbl.capacity) * 100);
                       const sideClr = SIDE_COLORS[tbl.side || 'Neutral'];
                       const isDragOver = dragTarget === tbl.id;
+                      const isTableSaving = savingTableId === tbl.id || (tbl.attendees || []).some(att => att.rsvp?.id === assigningId);
                       return (
                         <div
                           key={tbl.id}
                           onDragOver={e => handleDragOver(e, tbl.id)}
                           onDragLeave={() => setDragTarget(null)}
                           onDrop={e => handleDrop(e, tbl.id)}
-                          className={`bg-white rounded-2xl border-2 p-4 transition ${
-                            isDragOver ? 'border-[#722F37] bg-red-50/30 scale-[1.01]' : 'border-gray-200 hover:border-gray-300'
+                          className={`relative bg-white rounded-2xl border-2 p-4 transition overflow-hidden ${
+                            isDragOver ? 'border-[#722F37] bg-red-50/40 scale-[1.01]' : 'border-gray-200 hover:border-gray-300'
                           } shadow-sm`}
                         >
+                          {/* Drag over indicator */}
+                          {isDragOver && (
+                            <div className="absolute inset-0 bg-[#722F37]/10 backdrop-blur-[1px] border-2 border-dashed border-[#722F37] rounded-2xl flex flex-col items-center justify-center z-20 p-2 animate-pulse pointer-events-none">
+                              <div className="bg-white text-[#722F37] font-bold text-xs px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5">
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#722F37]" />
+                                <span>Drop guest to seat at {tbl.name}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Saving loading overlay */}
+                          {isTableSaving && (
+                            <div className="absolute inset-0 bg-white/85 backdrop-blur-[2px] rounded-2xl flex flex-col items-center justify-center z-20 transition-all duration-200">
+                              <div className="flex items-center gap-2 bg-[#722F37] text-white px-3.5 py-2 rounded-full shadow-lg text-xs font-semibold animate-pulse">
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                <span>Saving seat assignment...</span>
+                              </div>
+                            </div>
+                          )}
+
                           {/* Table header */}
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
@@ -597,10 +627,17 @@ export default function AdminDashboard() {
                                     <p className="font-semibold text-gray-700">{grp.invite?.familyName || 'Guest'}</p>
                                     <p className="text-gray-400 text-[10px]">{grp.attendees.length} person{grp.attendees.length !== 1 ? 's' : ''}</p>
                                   </div>
-                                  <button onClick={() => handleUnassign(grp.rsvp?.id)}
-                                    className="p-1 text-gray-300 hover:text-red-400 transition cursor-pointer" title="Remove from table">
-                                    <X className="w-3.5 h-3.5" />
-                                  </button>
+                                  {assigningId === grp.rsvp?.id ? (
+                                    <div className="flex items-center gap-1.5 text-[#722F37] text-[11px] font-semibold">
+                                      <RefreshCw className="w-3 h-3 animate-spin" />
+                                      <span>Saving...</span>
+                                    </div>
+                                  ) : (
+                                    <button onClick={() => handleUnassign(grp.rsvp?.id, tbl.id)}
+                                      className="p-1 text-gray-300 hover:text-red-400 transition cursor-pointer" title="Remove from table">
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -644,13 +681,22 @@ export default function AdminDashboard() {
                       const rsvp = invite.rsvp;
                       const side = invite.side || 'Neutral';
                       const sideClr = SIDE_COLORS[side];
+                      const isItemSaving = assigningId === rsvp?.id;
                       return (
                         <div
                           key={invite.id}
-                          draggable
+                          draggable={!isItemSaving}
                           onDragStart={e => handleDragStart(e, rsvp.id)}
-                          className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-xl cursor-grab active:cursor-grabbing hover:border-[#722F37]/30 hover:bg-red-50/20 transition group select-none"
+                          className="relative overflow-hidden flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-xl cursor-grab active:cursor-grabbing hover:border-[#722F37]/30 hover:bg-red-50/20 transition group select-none"
                         >
+                          {isItemSaving && (
+                            <div className="absolute inset-0 bg-white/90 backdrop-blur-[1px] rounded-xl flex items-center justify-center z-10">
+                              <div className="flex items-center gap-2 text-[#722F37] font-bold text-xs">
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                <span>Saving seat...</span>
+                              </div>
+                            </div>
+                          )}
                           <GripVertical className="w-3.5 h-3.5 text-gray-300 shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-bold text-gray-800 truncate">{invite.familyName}</p>
