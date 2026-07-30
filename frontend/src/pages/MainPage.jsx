@@ -683,7 +683,7 @@ export default function MainPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
           <div className="bg-white p-6 rounded-2xl border-2 border-wedding-wine/10 overflow-hidden h-[300px] shadow-lg">
             <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3946.086369801324!2d4.6130716!3d8.490983199999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x10364d6819d4a2b3%3A0x9b21971b235ebed8!2sSRV%20Event%20Centre!5e0!3m2!1sen!2sng!4v1783366849217!5m2!1sen!2sng"
+              src="https://www.google.com/maps/embed?pb=!1m12!1m8!1m3!1d15784.939318443474!2d4.670434!3d8.4765321!3m2!1i1024!2i768!4f13.1!2m1!1sUnilorin%20Multi%20Purpose%20Hall%20FMFC%20433%20Ilorin%20240102%20Kwara!5e0!3m2!1sen!2sng!4v1785416241432!5m2!1sen!2sng"
               className="w-full h-full border-0 rounded-lg"
               allowFullScreen=""
               loading="lazy"
