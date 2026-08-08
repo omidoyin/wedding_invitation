@@ -50,6 +50,11 @@ export default function AdminDashboard() {
   /* UI */
   const [activeTab, setActiveTab] = useState('overview');
   const [copiedId, setCopiedId]   = useState(null);
+  const [copiedMsgId, setCopiedMsgId] = useState(null);
+
+  /* Invitation message template */
+  const DEFAULT_MSG_TEMPLATE = `Hi {name}, you're warmly invited to the wedding of Ayodeji & Adesewa (AALOVESTORY2026)!\n\nPlease click the link below to confirm your attendance and get your entry pass:\n{link}\n\nWe can't wait to celebrate with you! 🎉`;
+  const [msgTemplate, setMsgTemplate] = useState(DEFAULT_MSG_TEMPLATE);
 
   const API_URL      = import.meta.env.VITE_API_URL      || 'http://localhost:5000/api';
   const BACKEND_URL  = import.meta.env.VITE_BACKEND_URL  || 'http://localhost:5000';
@@ -137,6 +142,17 @@ export default function AdminDashboard() {
     navigator.clipboard.writeText(`${FRONTEND_URL}/invite/${inviteToken}`).then(() => {
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
+
+  const handleCopyWithMessage = (inviteToken, familyName, id) => {
+    const link = `${FRONTEND_URL}/invite/${inviteToken}`;
+    const message = msgTemplate
+      .replace(/\{name\}/g, familyName)
+      .replace(/\{link\}/g, link);
+    navigator.clipboard.writeText(message).then(() => {
+      setCopiedMsgId(id);
+      setTimeout(() => setCopiedMsgId(null), 2500);
     });
   };
 
@@ -253,8 +269,8 @@ export default function AdminDashboard() {
     </div>
   );
 
-  const TABS = ['overview', 'invites', 'seating', 'gallery', 'donations'];
-  const TAB_LABELS = { overview: 'Overview', invites: 'Invites', seating: '🪑 Seating', gallery: 'Gallery', donations: 'Donations' };
+  const TABS = ['overview', 'invites', 'message', 'seating', 'gallery', 'donations'];
+  const TAB_LABELS = { overview: 'Overview', invites: 'Invites', message: '✉️ Message', seating: '🪑 Seating', gallery: 'Gallery', donations: 'Donations' };
 
   /* ════════════════════════ RENDER ════════════════════════ */
   return (
@@ -368,11 +384,37 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {createMsg && (
-                    <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-xl text-xs font-medium whitespace-pre-wrap break-all">
-                      {createMsg}
-                    </div>
-                  )}
+                  {createMsg && (() => {
+                    // Extract just the URL from the createMsg
+                    const urlMatch = createMsg.match(/(https?:\/\/\S+)/);
+                    const createdUrl = urlMatch ? urlMatch[1] : null;
+                    // Extract family name from the invite we just created (use familyName state before reset)
+                    return (
+                      <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-xl text-xs font-medium whitespace-pre-wrap break-all space-y-2">
+                        <p>{createMsg}</p>
+                        {createdUrl && (
+                          <div className="flex gap-2 flex-wrap pt-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(createdUrl);
+                                setCopiedId('create-link');
+                                setTimeout(() => setCopiedId(null), 2000);
+                              }}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border transition cursor-pointer ${
+                                copiedId === 'create-link'
+                                  ? 'bg-green-200 border-green-400 text-green-900'
+                                  : 'bg-white border-green-300 text-green-700 hover:bg-green-100'
+                              }`}
+                            >
+                              <Copy className="w-3 h-3" />
+                              {copiedId === 'create-link' ? 'Copied!' : 'Copy Link'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   <button type="submit" className="w-full py-3 bg-[#722F37] hover:bg-[#5A2328] text-white font-bold text-sm rounded-xl transition shadow-sm cursor-pointer">
                     GENERATE LINK
@@ -466,6 +508,15 @@ export default function AdminDashboard() {
                             className={`shrink-0 p-1.5 rounded-lg border transition cursor-pointer ${copiedId===invite.id ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-700'}`}>
                             {copiedId===invite.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                           </button>
+                          <button onClick={() => handleCopyWithMessage(invite.inviteToken, invite.familyName, `msg-${invite.id}`)}
+                            title="Copy invitation with message"
+                            className={`shrink-0 px-2 py-1.5 rounded-lg border transition cursor-pointer text-[10px] font-bold ${
+                              copiedMsgId === `msg-${invite.id}`
+                                ? 'bg-blue-50 border-blue-300 text-blue-700'
+                                : 'bg-gray-50 border-gray-200 text-gray-400 hover:border-[#722F37]/30 hover:text-[#722F37]'
+                            }`}>
+                            {copiedMsgId === `msg-${invite.id}` ? '✓ Copied!' : '✉️ +Msg'}
+                          </button>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -479,6 +530,96 @@ export default function AdminDashboard() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* ══ TAB: MESSAGE TEMPLATE ══ */}
+        {activeTab === 'message' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+              <div className="mb-5">
+                <h3 className="font-playfair text-base font-bold text-gray-800 mb-1">✉️ Invitation Message Template</h3>
+                <p className="text-xs text-gray-400">
+                  Edit your default invitation message below. Use <code className="bg-gray-100 px-1 rounded text-[#722F37]">{'{name}'}</code> for the guest name and <code className="bg-gray-100 px-1 rounded text-[#722F37]">{'{link}'}</code> for the invitation link. Copy buttons are available in the Invites table too.
+                </p>
+              </div>
+              <textarea
+                value={msgTemplate}
+                onChange={e => setMsgTemplate(e.target.value)}
+                rows={8}
+                className="w-full bg-[#FCFCFD] border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#722F37] transition font-mono leading-relaxed resize-y"
+              />
+              <div className="flex items-center gap-3 mt-3">
+                <button
+                  type="button"
+                  onClick={() => setMsgTemplate(DEFAULT_MSG_TEMPLATE)}
+                  className="px-4 py-2 text-xs font-bold border border-gray-200 rounded-xl text-gray-500 hover:bg-gray-50 transition cursor-pointer"
+                >
+                  Reset to Default
+                </button>
+                <span className="text-xs text-gray-400">Changes are saved in memory for this session.</span>
+              </div>
+            </div>
+
+            {/* Quick copy list */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="p-5 border-b border-gray-100">
+                <h3 className="font-playfair text-sm font-bold text-gray-800">Quick Copy — All Invites with Message</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Click "Copy with Message" to send personalised invitations instantly.</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 uppercase tracking-wider font-bold">
+                      <th className="px-5 py-3">Family Name</th>
+                      <th className="px-5 py-3">Max Guests</th>
+                      <th className="px-5 py-3">RSVP</th>
+                      <th className="px-5 py-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {invites.map(invite => (
+                      <tr key={invite.id} className="hover:bg-gray-50/50 transition">
+                        <td className="px-5 py-3 font-bold text-gray-800">{invite.familyName}</td>
+                        <td className="px-5 py-3 text-gray-500">{invite.maxGuests}</td>
+                        <td className="px-5 py-3">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                            invite.rsvpSubmitted
+                              ? 'bg-green-50 text-green-700 border-green-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}>{invite.rsvpSubmitted ? "RSVP'd" : 'Pending'}</span>
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleCopyLink(invite.inviteToken, `msg-tab-link-${invite.id}`)}
+                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition cursor-pointer ${
+                                copiedId === `msg-tab-link-${invite.id}`
+                                  ? 'bg-green-50 border-green-200 text-green-700'
+                                  : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300'
+                              }`}
+                            >
+                              <Copy className="w-3 h-3" />
+                              {copiedId === `msg-tab-link-${invite.id}` ? 'Copied!' : 'Copy Link'}
+                            </button>
+                            <button
+                              onClick={() => handleCopyWithMessage(invite.inviteToken, invite.familyName, `msg-tab-${invite.id}`)}
+                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border text-[10px] font-bold transition cursor-pointer ${
+                                copiedMsgId === `msg-tab-${invite.id}`
+                                  ? 'bg-blue-50 border-blue-300 text-blue-700'
+                                  : 'bg-[#722F37]/5 border-[#722F37]/20 text-[#722F37] hover:bg-[#722F37]/10'
+                              }`}
+                            >
+                              ✉️ {copiedMsgId === `msg-tab-${invite.id}` ? 'Copied with Message!' : 'Copy with Message'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

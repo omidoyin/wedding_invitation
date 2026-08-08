@@ -7,7 +7,8 @@ import confetti from 'canvas-confetti';
 import QRCode from 'qrcode';
 import { 
   Heart, Calendar, Clock, MapPin, Shirt, Gift, 
-  Camera, Upload, Download, CheckCircle, ChevronRight, Info 
+  Camera, Upload, Download, CheckCircle, ChevronRight, Info, 
+  ChevronDown
 } from 'lucide-react';
 
 export default function MainPage() {
@@ -19,6 +20,10 @@ export default function MainPage() {
   // RSVP success state
   const [rsvpSuccess, setRsvpSuccess] = useState(false);
   const [rsvpData, setRsvpData] = useState(null);
+  // Per-attendee inline QR data URLs for success screen
+  const [attendeeQRMap, setAttendeeQRMap] = useState({});
+  // Seating banner dismiss
+  const [seatBannerDismissed, setSeatBannerDismissed] = useState(false);
   
   // Donation states
   const [donationAmount, setDonationAmount] = useState('');
@@ -83,6 +88,19 @@ export default function MainPage() {
         if (inviteRes.data.rsvpSubmitted && inviteRes.data.rsvp) {
           setRsvpData(inviteRes.data.rsvp);
           setRsvpSuccess(true);
+          // Pre-generate inline QR codes for returning visitors
+          if (inviteRes.data.rsvp?.attendees?.length) {
+            const qrMap = {};
+            for (const att of inviteRes.data.rsvp.attendees) {
+              try {
+                qrMap[att.serialNumber] = await QRCode.toDataURL(att.serialNumber, {
+                  margin: 1, width: 120,
+                  color: { dark: '#1A0608', light: '#FAF8F5' }
+                });
+              } catch {}
+            }
+            setAttendeeQRMap(qrMap);
+          }
         }
 
         const galleryRes = await axios.get(`${API_URL}/gallery`);
@@ -157,6 +175,19 @@ export default function MainPage() {
         spread: 80,
         origin: { y: 0.6 }
       });
+      // Generate inline QR codes for each attendee
+      if (res.data?.attendees?.length) {
+        const qrMap = {};
+        for (const att of res.data.attendees) {
+          try {
+            qrMap[att.serialNumber] = await QRCode.toDataURL(att.serialNumber, {
+              margin: 1, width: 120,
+              color: { dark: '#1A0608', light: '#FAF8F5' }
+            });
+          } catch {}
+        }
+        setAttendeeQRMap(qrMap);
+      }
     } catch (err) {
       console.error('RSVP submission error:', err);
       alert(err.response?.data?.error || 'Failed to submit RSVP.');
@@ -517,7 +548,28 @@ export default function MainPage() {
               SUPPORT WEDDING
             </a>
           </motion.div>
+
+           <div className="absolute bottom-2 left- right-32 md:left-1/2 md:-translate-x-1/2 md:right-auto  flex flex-col md:flex-row items-center justify-end w-full gap-4 animate-slide-up text-[#FAF8F5] select-none">
+           {/* Bouncing scroll-down arrow */}
+        <motion.div
+          className="absolute bottom-10  z-10 flex flex-col items-center gap-1 cursor-pointer"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2, duration: 0.6 }}
+          onClick={() => document.getElementById('rsvp')?.scrollIntoView({ behavior: 'smooth' })}
+        >
+          <span className="text-[10px] text-wedding-gold/60 uppercase tracking-[0.3em] font-semibold">Scroll</span>
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <ChevronDown className="w-7 h-7 text-wedding-gold drop-shadow-[0_0_8px_rgba(212,175,55,0.6)]" />
+          </motion.div>
+        </motion.div>
         </div>
+        </div>
+
+      
       </section>
 
       {/* ── COUPLE PHOTO CAROUSEL ── */}
@@ -538,7 +590,7 @@ export default function MainPage() {
               <img
                 src={src}
                 alt={`Couple photo ${idx + 1}`}
-                className="w-full h-full object-cover object-center"
+                className="w-full h-full object-cover "
                 loading="lazy"
               />
               {/* Subtle vignette overlay */}
@@ -665,7 +717,7 @@ export default function MainPage() {
           <div className="bg-wedding-wine text-white p-8 rounded-2xl border border-wedding-gold/30 text-center flex flex-col items-center shadow-xl">
             <MapPin className="w-8 h-8 text-wedding-gold mb-4 animate-pulse" />
             <h3 className="font-playfair text-lg text-wedding-gold font-bold mb-2">Where</h3>
-            <p className="text-sm text-wedding-lightBeige font-medium">Multi-Purpose Hall</p>
+            <p className="text-sm text-wedding-lightBeige font-medium">Multi-Purpose Hall, University of Ilorin</p>
             <p className="text-xs text-[#FAF8F5]/80 mt-1">Ilorin, Kwara, Nigeria</p>
           </div>
 
@@ -772,6 +824,22 @@ export default function MainPage() {
               <p className="text-xs text-wedding-lightBeige leading-relaxed">
                 Each Attendee will be given a unique pass to access the event venue.
               </p>
+
+              {/* Instructional slot-selection message */}
+              <div className="bg-wedding-gold/10 border border-wedding-gold/30 p-4 rounded-xl">
+                {invite?.maxGuests > 1 ? (
+                  <p className="text-sm font-bold text-wedding-gold text-center leading-relaxed">
+                    👥 Please select the number of guests attending and fill in each person's details below.
+                    <span className="block text-xs font-normal text-wedding-lightBeige/90 mt-1">
+                      Remember to include yourself in the count.
+                    </span>
+                  </p>
+                ) : (
+                  <p className="text-sm font-bold text-wedding-gold text-center leading-relaxed">
+                    🎟️ You have been allocated <span className="text-white">1 slot</span> — please select 1 guest (yourself).
+                  </p>
+                )}
+              </div>
 
               {/* Number of Attendees selector */}
               <div className="space-y-2">
@@ -922,17 +990,30 @@ export default function MainPage() {
                             <div className="text-[9px] text-wedding-gold uppercase tracking-[0.3em] font-semibold mb-3">
                               AALOVESTORY26
                             </div>
-                            
-                            <h4 className="font-playfair text-lg text-white font-bold tracking-wide">
-                              {att.fullName}
-                            </h4>
-                            
-                            {att.registeredBy && (
-                              <p className="text-[10px] text-wedding-lightBeige/60 italic mt-0.5">
-                                (Registered by: {att.registeredBy})
-                              </p>
-                            )}
 
+                            {/* Attendee name + inline QR side-by-side */}
+                            <div className="flex items-center gap-3 w-full justify-center">
+                              <div className="text-left">
+                                <h4 className="font-playfair text-lg text-white font-bold tracking-wide">
+                                  {att.fullName}
+                                </h4>
+                                {att.registeredBy && (
+                                  <p className="text-[10px] text-wedding-lightBeige/60 italic mt-0.5">
+                                    (Reg. by: {att.registeredBy})
+                                  </p>
+                                )}
+                              </div>
+                              {attendeeQRMap[att.serialNumber] && (
+                                <div className="bg-white p-1.5 rounded-lg border border-wedding-gold/30 shrink-0">
+                                  <img
+                                    src={attendeeQRMap[att.serialNumber]}
+                                    alt={`QR for ${att.fullName}`}
+                                    className="w-14 h-14"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                            
                             {/* Serial Number Display */}
                             <div className="mt-4 bg-black/40 border border-wedding-gold/15 px-4 py-2 rounded-xl">
                               <span className="text-[9px] text-wedding-goldLight/80 uppercase tracking-widest block">Entry Pass Code</span>
@@ -1141,7 +1222,7 @@ export default function MainPage() {
           <Calendar className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
           <h2 className="font-playfair text-3xl sm:text-4xl text-wedding-wine tracking-wider font-bold">Wedding Programme</h2>
           <p className="text-sm text-wedding-wineDark/80 italic mt-1">
-            Ayodeji &amp; Adesewa — October 10, 2026 · Multi-Purpose Hall, Ilorin, Kwara
+            Ayodeji &amp; Adesewa — October 10, 2026 · Multi-Purpose Hall, University of Ilorin, Ilorin, Kwara
           </p>
           <div className="w-16 h-[1px] bg-wedding-gold/40 mx-auto mt-4"></div>
         </div>
@@ -1166,12 +1247,34 @@ export default function MainPage() {
       <footer className="md:py-20 py-10 border-t border-wedding-gold/10 text-center bg-wedding-darkCard/40">
         <h2 className="font-playfair text-xl text-gold-gradient tracking-widest">AALOVESTORY2026</h2>
         <p className="text-xs text-wedding-beige/60 font-poppins mt-2 tracking-wider">Ayodeji & Adesewa — Forever & Always</p>
-        <p className="text-[9px] text-wedding-gold/30 font-poppins tracking-[0.2em] mt-8 uppercase">© 2026 AALOVESTORY. All Rights Reserved.</p>
+        <p className="text-[12px] font-poppins tracking-[0.2em] mt-8 uppercase  font-playfair text-wedding-wine tracking-wider font-bold">© 2026 AALOVESTORY. All Rights Reserved.</p>
+
+        {/* Builder credit */}
+        <div className="mt-6 flex flex-col items-center gap-1">
+          <p className="text-[12px]  tracking-widest uppercase font-playfair text-wedding-wine tracking-wider font-bold">Website designed & built by</p>
+          <a
+            href="https://wa.me/2348105281572"
+            target="_blank"
+            rel="noreferrer"
+            className="text-[12px]  hover:text-wedding-gold/70 transition-colors duration-300 font-bold tracking-wider font-playfair text-wedding-wine tracking-wider font-bold"
+          >
+            Veleonsolution · 08105281572
+          </a>
+        </div>
       </footer>
 
       {/* Sticky Seating Banner */}
-      {invite && invite.rsvpSubmitted && (
+      {invite && invite.rsvpSubmitted && !seatBannerDismissed && (
         <div className="fixed bottom-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-4xl z-50 bg-[#722F37] border border-[#D4AF37]/50 p-4 sm:p-5 rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.6)] flex flex-col md:flex-row items-center justify-between gap-4 animate-slide-up text-[#FAF8F5] select-none">
+          {/* Close button */}
+          <button
+            onClick={() => setSeatBannerDismissed(true)}
+            aria-label="Close seating banner"
+            className="absolute top-2.5 right-2.5 w-6 h-6 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/25 border border-[#D4AF37]/20 text-[#D4AF37]/70 hover:text-white transition-all duration-200 text-xs cursor-pointer"
+          >
+            ✕
+          </button>
+
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-[#D4AF37]/30 text-lg">
               🪑
@@ -1224,6 +1327,11 @@ export default function MainPage() {
           </div>
         </div>
       )}
+
+
+
+
+
     </div>
   );
 }
