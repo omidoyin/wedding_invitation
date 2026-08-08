@@ -528,7 +528,7 @@ export default function MainPage() {
             transition={{ delay: 0.6, duration: 0.8 }}
             className="text-[#FAF8F5]/90 text-sm sm:text-base tracking-[0.2em] font-playfair uppercase mt-2 mb-8"
           >
-            October 10, 2026 | Kwara, Nigeria
+            October 10, 2026 | Ilorin Kwara, Nigeria
           </motion.p>
 
           {/* Call to Actions */}
