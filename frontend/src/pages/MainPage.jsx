@@ -636,8 +636,8 @@ export default function MainPage() {
       </section>
 
       {/* 2. LOVE STORY SECTION */}
-      <section className="md:py-20 py-10 px-6 max-w-4xl mx-auto border-b border-wedding-gold/10">
-        <div className="text-center mb-16">
+      <section className="md:py-20 py-4  px-4 max-w-4xl mx-auto border-b border-wedding-gold/10">
+        <div className="text-center mb-8">
           <Heart className="w-10 h-10 text-wedding-wine mx-auto mb-3 animate-pulse" />
           <h2 className="font-playfair text-3xl sm:text-4xl text-wedding-wine tracking-wider font-bold">Our Love Story</h2>
           <p className="italic text-wedding-wineDark/80 text-sm mt-1">“We met in university and became friends.”</p>
@@ -697,8 +697,8 @@ export default function MainPage() {
       </section>
 
       {/* 3. EVENT DETAILS */}
-      <section className="py-10 md:py-20 px-6 max-w-5xl mx-auto border-b border-wedding-gold/10">
-        <div className="text-center mb-16">
+      <section className="py-4 md:py-20 px-3 max-w-5xl mx-auto border-b border-wedding-gold/10">
+        <div className="text-center mb-8">
           <Calendar className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
           <h2 className="font-playfair text-3xl sm:text-4xl text-wedding-wine tracking-wider font-bold">Event Details</h2>
           <div className="w-16 h-[1px] bg-wedding-gold/40 mx-auto mt-4"></div>
@@ -759,7 +759,7 @@ export default function MainPage() {
       </section>
 
       {/* 4. COLOR THEME PALETTE */}
-      <section className="md:py-20 py-10 px-6 max-w-4xl mx-auto border-b border-wedding-gold/10">
+      <section className="md:py-20 py-4 px-3 max-w-4xl mx-auto border-b border-wedding-gold/10">
         <div className="text-center mb-12">
           <h2 className="font-playfair text-2xl sm:text-3xl text-wedding-wine font-bold tracking-wider">Wedding Color Palette</h2>
           <div className="w-16 h-[1px] bg-wedding-gold/40 mx-auto mt-3"></div>
@@ -793,8 +793,8 @@ export default function MainPage() {
       </section>
 
       {/* 5. RSVP SECTION */}
-      <section id="rsvp" className={`md:py-20 py-10 px-6 mx-auto border-b border-wedding-gold/10 scroll-mt-20 transition-all duration-500 ${rsvpSuccess ? 'max-w-4xl' : 'max-w-2xl'}`}>
-        <div className="text-center mb-12">
+      <section id="rsvp" className={`md:py-20 py-4 px-3 mx-auto border-b border-wedding-gold/10 scroll-mt-20 transition-all duration-500 ${rsvpSuccess ? 'max-w-4xl' : 'max-w-2xl'}`}>
+        <div className="text-center mb-8">
           <Heart className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
           <h2 className="font-playfair text-3xl text-wedding-wine tracking-wider font-bold">RSVP</h2>
           <p className="text-sm text-wedding-wineDark font-medium mt-1">Please confirm your attendance by submitting the RSVP below.</p>
@@ -802,7 +802,7 @@ export default function MainPage() {
         </div>
 
         {/* RSVP FORM OR SUCCESS SCREEN */}
-        <div className="bg-gradient-to-br from-[#3D1B1E] to-[#250E10] text-[#FAF8F5] p-8 rounded-3xl border border-wedding-gold/30 relative overflow-hidden shadow-2xl">
+        <div className="bg-gradient-to-br from-[#3D1B1E] to-[#250E10] text-[#FAF8F5] p-4 rounded-3xl border border-wedding-gold/30 relative overflow-hidden shadow-2xl">
           {/* Gold Decorative Corner Lines */}
           <div className="absolute top-2 left-2 w-6 h-6 border-t border-l border-wedding-gold/20"></div>
           <div className="absolute top-2 right-2 w-6 h-6 border-t border-r border-wedding-gold/20"></div>
@@ -1080,7 +1080,7 @@ export default function MainPage() {
       </section>
 
       {/* 6. DONATION/SUPPORT SYSTEM */}
-      <section id="support" className="md:py-20 py-10 px-6 max-w-2xl mx-auto border-b border-wedding-gold/10 scroll-mt-20">
+      <section id="support" className="md:py-20 py-4 px-3 max-w-2xl mx-auto border-b border-wedding-gold/10 scroll-mt-20">
         <div className="text-center mb-12">
           <Gift className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
           <h2 className="font-playfair text-3xl text-wedding-wine tracking-wider font-bold">Support Our Wedding</h2>
@@ -1135,7 +1135,7 @@ export default function MainPage() {
       </section>
 
       {/* 7. PHOTO GALLERY SECTION */}
-      <section id="gallery" className="md:py-20 py-10 px-6 max-w-5xl mx-auto">
+      <section id="gallery" className="md:py-20 py-4 px-3 max-w-5xl mx-auto">
         <div className="text-center mb-12">
           <Camera className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
           <h2 className="font-playfair text-3xl text-wedding-wine tracking-wider font-bold">Wedding Photo Gallery</h2>
@@ -1217,7 +1217,7 @@ export default function MainPage() {
       </section>
 
       {/* 8. WEDDING PROGRAMME SECTION */}
-      <section id="programme" className="md:py-20 py-10 px-6 max-w-4xl mx-auto border-b border-wedding-gold/10">
+      <section id="programme" className="md:py-20 py-4 px-3 max-w-4xl mx-auto border-b border-wedding-gold/10">
         <div className="text-center mb-10">
           <Calendar className="w-10 h-10 text-wedding-wine mx-auto mb-3" />
           <h2 className="font-playfair text-3xl sm:text-4xl text-wedding-wine tracking-wider font-bold">Wedding Programme</h2>
