@@ -55,8 +55,8 @@ export default function MainPage() {
   const [addGuestLoading, setAddGuestLoading] = useState(false);
 
   // Donation / Gift states
-  const [donationAmount, setDonationAmount] = useState('10000');
-  const [donationDisplay, setDonationDisplay] = useState('₦ 10,000'); // formatted display value
+  const [donationAmount, setDonationAmount] = useState('100000');
+  const [donationDisplay, setDonationDisplay] = useState('₦ 100,000'); // formatted display value
   const [donorName, setDonorName] = useState('');
   const [donorEmail, setDonorEmail] = useState('');
   const [giftMessage, setGiftMessage] = useState('');
