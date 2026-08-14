@@ -469,7 +469,7 @@ export default function AdminDashboard() {
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 uppercase tracking-wider font-bold">
-                    <th className="px-6 py-3.5">Family Name</th>
+                    <th className="px-6 py-3.5 sticky left-0 z-20 bg-gray-50 border-r border-gray-200/80 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] min-w-[140px]">Family Name</th>
                     <th className="px-6 py-3.5">Category</th>
                     <th className="px-6 py-3.5">Side</th>
                     <th className="px-6 py-3.5">Max</th>
@@ -480,8 +480,8 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {invites.map(invite => (
-                    <tr key={invite.id} className="hover:bg-gray-50/50 transition">
-                      <td className="px-6 py-4 font-bold text-gray-800">{invite.familyName}</td>
+                    <tr key={invite.id} className="group hover:bg-gray-50/50 transition">
+                      <td className="px-6 py-4 font-bold text-gray-800 sticky left-0 z-10 bg-white group-hover:bg-gray-50 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] min-w-[140px]">{invite.familyName}</td>
                       <td className="px-6 py-4 text-gray-500">{invite.category}</td>
                       <td className="px-6 py-4">
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border" style={{
@@ -572,7 +572,7 @@ export default function AdminDashboard() {
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 uppercase tracking-wider font-bold">
-                      <th className="px-5 py-3">Family Name</th>
+                      <th className="px-5 py-3 sticky left-0 z-20 bg-gray-50 border-r border-gray-200/80 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] min-w-[140px]">Family Name</th>
                       <th className="px-5 py-3">Max Guests</th>
                       <th className="px-5 py-3">RSVP</th>
                       <th className="px-5 py-3">Actions</th>
@@ -580,8 +580,8 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {invites.map(invite => (
-                      <tr key={invite.id} className="hover:bg-gray-50/50 transition">
-                        <td className="px-5 py-3 font-bold text-gray-800">{invite.familyName}</td>
+                      <tr key={invite.id} className="group hover:bg-gray-50/50 transition">
+                        <td className="px-5 py-3 font-bold text-gray-800 sticky left-0 z-10 bg-white group-hover:bg-gray-50 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] min-w-[140px]">{invite.familyName}</td>
                         <td className="px-5 py-3 text-gray-500">{invite.maxGuests}</td>
                         <td className="px-5 py-3">
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
