@@ -7,7 +7,7 @@ import QRCode from 'qrcode';
 import { 
   Heart, Calendar, Clock, MapPin, Shirt, Gift, 
   Camera, Upload, Download, CheckCircle, ChevronRight, Info, 
-  ChevronDown, Loader2, Sparkles, User, Mail, MessageSquare
+  ChevronDown, Loader2, Sparkles, User, Mail, MessageSquare, Plus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { initializePaystackPayment } from '../utils/paystack';
@@ -36,7 +36,8 @@ export default function MainPage() {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
+    // Do NOT call handleScroll() immediately — the page height isn't finalised yet
+    // at mount time, so the check would wrongly hide the arrow. Let it default to visible.
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
@@ -48,6 +49,11 @@ export default function MainPage() {
   // Seating banner dismiss
   const [seatBannerDismissed, setSeatBannerDismissed] = useState(false);
   
+  // Additional guests registration state
+  const [showAddGuestForm, setShowAddGuestForm] = useState(false);
+  const [additionalGuests, setAdditionalGuests] = useState([{ fullName: '', phoneNumber: '' }]);
+  const [addGuestLoading, setAddGuestLoading] = useState(false);
+
   // Donation / Gift states
   const [donationAmount, setDonationAmount] = useState('10000');
   const [donationDisplay, setDonationDisplay] = useState('₦ 10,000'); // formatted display value
@@ -217,6 +223,54 @@ export default function MainPage() {
     } catch (err) {
       console.error('RSVP submission error:', err);
       alert(err.response?.data?.error || 'Failed to submit RSVP.');
+    }
+  };
+
+  // Add Remaining Unused Guests Handler
+  const handleAddRemainingGuests = async (e) => {
+    e.preventDefault();
+    const validAttendees = additionalGuests.filter(g => g.fullName && g.fullName.trim() !== '');
+    if (validAttendees.length === 0) {
+      alert('Please enter at least one guest name.');
+      return;
+    }
+
+    setAddGuestLoading(true);
+    try {
+      const res = await axios.post(`${API_URL}/rsvp`, {
+        inviteId: invite.id,
+        attendees: validAttendees
+      });
+
+      setRsvpData(res.data);
+      setShowAddGuestForm(false);
+      setAdditionalGuests([{ fullName: '', phoneNumber: '' }]);
+
+      // Pre-generate inline QR codes for new attendees
+      if (res.data?.attendees?.length) {
+        const qrMap = { ...attendeeQRMap };
+        for (const att of res.data.attendees) {
+          try {
+            qrMap[att.serialNumber] = await QRCode.toDataURL(att.serialNumber, {
+              margin: 1, width: 120,
+              color: { dark: '#1A0608', light: '#FAF8F5' }
+            });
+          } catch {}
+        }
+        setAttendeeQRMap(qrMap);
+      }
+
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 }
+      });
+      alert('Additional guest(s) registered successfully!');
+    } catch (err) {
+      console.error('Error adding remaining guests:', err);
+      alert(err.response?.data?.error || 'Failed to add remaining guests.');
+    } finally {
+      setAddGuestLoading(false);
     }
   };
 
@@ -1166,6 +1220,94 @@ export default function MainPage() {
                   </li>
                 </ul>
               </div>
+
+              {/* Add remaining guests form if unused slots exist */}
+              {(() => {
+                const registeredCount = rsvpData?.attendees?.length || 0;
+                const maxSlots = invite?.maxGuests || 0;
+                const remainingSlots = maxSlots - registeredCount;
+
+                if (remainingSlots > 0 && !invite?.isAttendee) {
+                  return (
+                    <div className="max-w-xl mx-auto w-full bg-[#240A0C]/90 border border-wedding-gold/40 p-6 rounded-2xl text-left mt-6 shadow-xl space-y-4">
+                      <div className="flex items-center gap-2 border-b border-wedding-gold/20 pb-3">
+                        <Plus className="w-5 h-5 text-wedding-gold" />
+                        <h4 className="font-playfair text-base font-bold text-wedding-gold">
+                          Register Remaining Guest(s) ({remainingSlots} slot{remainingSlots > 1 ? 's' : ''} available)
+                        </h4>
+                      </div>
+                      <p className="text-xs text-wedding-lightBeige/80 leading-relaxed">
+                        Your invitation allows up to <strong className="text-wedding-gold">{maxSlots} guests</strong>. You have currently registered <strong className="text-wedding-gold">{registeredCount} guest{registeredCount > 1 ? 's' : ''}</strong>. You can register the remaining {remainingSlots} guest(s) below whenever they are ready.
+                      </p>
+
+                      {showAddGuestForm ? (
+                        <form onSubmit={handleAddRemainingGuests} className="space-y-4 pt-2">
+                          {additionalGuests.map((g, idx) => (
+                            <div key={idx} className="p-3.5 bg-black/40 border border-wedding-gold/20 rounded-xl space-y-2">
+                              <span className="text-[10px] font-bold text-wedding-gold uppercase tracking-wider block">Additional Guest #{registeredCount + idx + 1}</span>
+                              <input
+                                type="text"
+                                required
+                                placeholder="Full Name"
+                                value={g.fullName}
+                                onChange={(e) => {
+                                  const copy = [...additionalGuests];
+                                  copy[idx].fullName = e.target.value;
+                                  setAdditionalGuests(copy);
+                                }}
+                                className="w-full bg-white/10 border border-wedding-gold/30 rounded-lg px-3 py-2 text-xs text-white placeholder-white/40 focus:outline-none focus:border-wedding-gold"
+                              />
+                              <input
+                                type="tel"
+                                placeholder="Phone Number (optional)"
+                                value={g.phoneNumber}
+                                onChange={(e) => {
+                                  const copy = [...additionalGuests];
+                                  copy[idx].phoneNumber = e.target.value;
+                                  setAdditionalGuests(copy);
+                                }}
+                                className="w-full bg-white/10 border border-wedding-gold/30 rounded-lg px-3 py-2 text-xs text-white placeholder-white/40 focus:outline-none focus:border-wedding-gold"
+                              />
+                            </div>
+                          ))}
+
+                          <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                            {additionalGuests.length < remainingSlots && (
+                              <button
+                                type="button"
+                                onClick={() => setAdditionalGuests([...additionalGuests, { fullName: '', phoneNumber: '' }])}
+                                className="px-3 py-2 bg-white/10 hover:bg-white/20 text-wedding-gold text-xs font-semibold rounded-lg border border-wedding-gold/30 transition cursor-pointer"
+                              >
+                                + Add Another Slot
+                              </button>
+                            )}
+                            <button
+                              type="submit"
+                              disabled={addGuestLoading}
+                              className="flex-1 py-3 bg-wedding-gold hover:bg-wedding-goldLight text-wedding-wineDark font-playfair font-bold text-xs rounded-lg transition cursor-pointer disabled:opacity-50 shadow-md"
+                            >
+                              {addGuestLoading ? 'SAVING GUEST(S)...' : 'CONFIRM ADDITIONAL GUEST(S)'}
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAdditionalGuests([{ fullName: '', phoneNumber: '' }]);
+                            setShowAddGuestForm(true);
+                          }}
+                          className="w-full py-3 bg-wedding-gold/20 hover:bg-wedding-gold/30 text-wedding-gold border border-wedding-gold/40 rounded-xl text-xs font-playfair font-bold tracking-wider transition cursor-pointer flex items-center justify-center gap-2"
+                        >
+                          <Plus className="w-4 h-4 text-wedding-gold" /> ADD REMAINING GUEST(S) NOW
+                        </button>
+                      )}
+                    </div>
+                  );
+                }
+
+                return null;
+              })()}
             </div>
           )}
         </div>

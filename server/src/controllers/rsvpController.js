@@ -75,21 +75,17 @@ export async function submitRSVP(req, res) {
     // Fetch the invite to validate maxGuests
     const invite = await prisma.invite.findUnique({
       where: { id: parseInt(inviteId) },
-      include: { rsvp: true }
+      include: { 
+        rsvp: {
+          include: {
+            attendees: true
+          }
+        } 
+      }
     });
 
     if (!invite) {
       return res.status(404).json({ error: 'Invitation not found.' });
-    }
-
-    if (invite.rsvpSubmitted) {
-      return res.status(400).json({ error: 'RSVP has already been submitted for this invitation.' });
-    }
-
-    if (attendees.length > invite.maxGuests) {
-      return res.status(400).json({ 
-        error: `Exceeded maximum guest limit. Allowed: ${invite.maxGuests}, Submitted: ${attendees.length}` 
-      });
     }
 
     // Validate attendee names are present
@@ -97,6 +93,79 @@ export async function submitRSVP(req, res) {
       if (!att.fullName || att.fullName.trim() === '') {
         return res.status(400).json({ error: 'All attendees must have a valid name.' });
       }
+    }
+
+    // Check if an RSVP already exists for this invitation
+    if (invite.rsvpSubmitted && invite.rsvp) {
+      const existingAttendees = invite.rsvp.attendees || [];
+      const currentCount = existingAttendees.length;
+      const remainingSlots = invite.maxGuests - currentCount;
+
+      if (remainingSlots <= 0) {
+        return res.status(400).json({ 
+          error: `All ${invite.maxGuests} guest slot(s) for this invitation have already been registered.` 
+        });
+      }
+
+      if (attendees.length > remainingSlots) {
+        return res.status(400).json({ 
+          error: `Exceeded remaining guest limit. Remaining slots available: ${remainingSlots}, Submitted: ${attendees.length}` 
+        });
+      }
+
+      // Append new attendees to the existing RSVP
+      const result = await prisma.$transaction(async (tx) => {
+        const attendeeData = [];
+        for (let i = 0; i < attendees.length; i++) {
+          const att = attendees[i];
+          const attSerial = await generateUniqueAttendeeSerial(tx);
+          const attToken = await generateUniqueAttendeeToken(tx);
+          const registeredBy = existingAttendees[0]?.fullName || attendees[0].fullName.trim();
+
+          attendeeData.push({
+            rsvpId: invite.rsvp.id,
+            fullName: att.fullName.trim(),
+            phoneNumber: att.phoneNumber ? att.phoneNumber.trim() : null,
+            serialNumber: attSerial,
+            attendeeToken: attToken,
+            registeredBy: registeredBy
+          });
+        }
+
+        await tx.attendee.createMany({
+          data: attendeeData
+        });
+
+        // Update total attendanceCount on RSVP
+        const updatedRsvp = await tx.rSVP.update({
+          where: { id: invite.rsvp.id },
+          data: {
+            attendanceCount: currentCount + attendees.length
+          },
+          include: {
+            attendees: true
+          }
+        });
+
+        return { rsvp: updatedRsvp, attendees: updatedRsvp.attendees };
+      });
+
+      return res.status(200).json({
+        message: 'Additional guest(s) added successfully!',
+        serialNumber: result.rsvp.serialNumber,
+        qrCode: result.rsvp.qrCode,
+        attendanceCount: result.rsvp.attendanceCount,
+        familyName: invite.familyName,
+        seatingPublished: Boolean(invite.seatingPublished),
+        attendees: result.attendees
+      });
+    }
+
+    // Initial RSVP creation flow (when invite.rsvp is not created yet)
+    if (attendees.length > invite.maxGuests) {
+      return res.status(400).json({ 
+        error: `Exceeded maximum guest limit. Allowed: ${invite.maxGuests}, Submitted: ${attendees.length}` 
+      });
     }
 
     // Generate serial number and QR Code data URL
@@ -146,10 +215,15 @@ export async function submitRSVP(req, res) {
         data: { rsvpSubmitted: true }
       });
 
-      return { rsvp, attendees: attendeeData };
+      const fullRsvp = await tx.rSVP.findUnique({
+        where: { id: rsvp.id },
+        include: { attendees: true }
+      });
+
+      return { rsvp: fullRsvp, attendees: fullRsvp.attendees };
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'RSVP submitted successfully!',
       serialNumber: result.rsvp.serialNumber,
       qrCode: result.rsvp.qrCode,

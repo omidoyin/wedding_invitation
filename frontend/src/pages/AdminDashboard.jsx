@@ -45,6 +45,7 @@ export default function AdminDashboard() {
   const [savingTableId, setSavingTableId]       = useState(null); // tableId being saved to/from
   const [dragTarget, setDragTarget]             = useState(null); // tableId being dragged over
   const [filterSide, setFilterSide]             = useState('All');
+  const [filterCategory, setFilterCategory]     = useState('All');
   const [keepFamily, setKeepFamily]             = useState(true);
 
   /* UI */
@@ -460,79 +461,141 @@ export default function AdminDashboard() {
         )}
 
         {/* ══ TAB: INVITES ══ */}
-        {activeTab === 'invites' && (
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="font-playfair text-base font-bold text-gray-800">Guest Invitations ({invites.length})</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 uppercase tracking-wider font-bold">
-                    <th className="px-6 py-3.5 sticky left-0 z-20 bg-gray-50 border-r border-gray-200/80 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] min-w-[140px]">Family Name</th>
-                    <th className="px-6 py-3.5">Category</th>
-                    <th className="px-6 py-3.5">Side</th>
-                    <th className="px-6 py-3.5">Max</th>
-                    <th className="px-6 py-3.5">RSVP</th>
-                    <th className="px-6 py-3.5">Invite Link</th>
-                    <th className="px-6 py-3.5">Checked In</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {invites.map(invite => (
-                    <tr key={invite.id} className="group hover:bg-gray-50/50 transition">
-                      <td className="px-6 py-4 font-bold text-gray-800 sticky left-0 z-10 bg-white group-hover:bg-gray-50 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] min-w-[140px]">{invite.familyName}</td>
-                      <td className="px-6 py-4 text-gray-500">{invite.category}</td>
-                      <td className="px-6 py-4">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border" style={{
-                          background: SIDE_COLORS[invite.side || 'Neutral']?.bg,
-                          borderColor: SIDE_COLORS[invite.side || 'Neutral']?.border,
-                          color: SIDE_COLORS[invite.side || 'Neutral']?.text,
-                        }}>{invite.side || 'Neutral'}</span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-500">{invite.maxGuests}</td>
-                      <td className="px-6 py-4">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                          invite.rsvpSubmitted
-                            ? 'bg-green-50 text-green-700 border-green-200'
-                            : 'bg-amber-50 text-amber-700 border-amber-200'
-                        }`}>{invite.rsvpSubmitted ? "RSVP'd" : 'Pending'}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <a href={`${FRONTEND_URL}/invite/${invite.inviteToken}`} target="_blank" rel="noopener noreferrer"
-                            className="font-mono text-[#722F37] hover:underline text-[10px] max-w-[180px] truncate block">
-                            {FRONTEND_URL}/invite/{invite.inviteToken}
-                          </a>
-                          <button onClick={() => handleCopyLink(invite.inviteToken, invite.id)}
-                            className={`shrink-0 p-1.5 rounded-lg border transition cursor-pointer ${copiedId===invite.id ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-700'}`}>
-                            {copiedId===invite.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                          </button>
-                          <button onClick={() => handleCopyWithMessage(invite.inviteToken, invite.familyName, `msg-${invite.id}`)}
-                            title="Copy invitation with message"
-                            className={`shrink-0 px-2 py-1.5 rounded-lg border transition cursor-pointer text-[10px] font-bold ${
-                              copiedMsgId === `msg-${invite.id}`
-                                ? 'bg-blue-50 border-blue-300 text-blue-700'
-                                : 'bg-gray-50 border-gray-200 text-gray-400 hover:border-[#722F37]/30 hover:text-[#722F37]'
-                            }`}>
-                            {copiedMsgId === `msg-${invite.id}` ? '✓ Copied!' : '✉️ +Msg'}
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {invite.rsvp?.checkedIn
-                          ? <span className="text-green-600 font-bold">✓ Checked In</span>
-                          : invite.rsvp?.checkedOut
-                          ? <span className="text-red-500 font-bold">Checked Out</span>
-                          : <span className="text-gray-300">—</span>}
-                      </td>
+        {activeTab === 'invites' && (() => {
+          const filteredInvites = invites.filter(invite => {
+            const matchSide = filterSide === 'All' || (invite.side || 'Neutral') === filterSide;
+            const matchCat  = filterCategory === 'All' || (invite.category || 'Family') === filterCategory;
+            return matchSide && matchCat;
+          });
+
+          return (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden space-y-0">
+              <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-playfair text-base font-bold text-gray-800">
+                    Guest Invitations ({filteredInvites.length}{filteredInvites.length !== invites.length ? ` of ${invites.length}` : ''})
+                  </h3>
+                </div>
+
+                {/* Filters */}
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Side Filter */}
+                  <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 text-xs">
+                    <span className="text-gray-400 font-bold px-2 text-[10px] uppercase">Side:</span>
+                    {['All', 'Bride', 'Groom', 'Neutral'].map(side => (
+                      <button
+                        key={side}
+                        type="button"
+                        onClick={() => setFilterSide(side)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                          filterSide === side
+                            ? 'bg-[#722F37] text-white shadow-xs'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                        }`}
+                      >
+                        {side}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Category Filter */}
+                  <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 text-xs">
+                    <span className="text-gray-400 font-bold px-2 text-[10px] uppercase">Category:</span>
+                    {['All', 'Family', 'Friend', 'VIP', 'Colleague'].map(cat => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setFilterCategory(cat)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                          filterCategory === cat
+                            ? 'bg-[#722F37] text-white shadow-xs'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 uppercase tracking-wider font-bold">
+                      <th className="px-6 py-3.5 sticky left-0 z-20 bg-gray-50 border-r border-gray-200/80 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] min-w-[140px]">Family Name</th>
+                      <th className="px-6 py-3.5">Category</th>
+                      <th className="px-6 py-3.5">Side</th>
+                      <th className="px-6 py-3.5">Max</th>
+                      <th className="px-6 py-3.5">RSVP</th>
+                      <th className="px-6 py-3.5">Invite Link</th>
+                      <th className="px-6 py-3.5">Checked In</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {filteredInvites.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-8 text-center text-gray-400 italic">
+                          No invitations found matching the selected filters.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredInvites.map(invite => (
+                        <tr key={invite.id} className="group hover:bg-gray-50/50 transition">
+                          <td className="px-6 py-4 font-bold text-gray-800 sticky left-0 z-10 bg-white group-hover:bg-gray-50 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] min-w-[140px]">{invite.familyName}</td>
+                          <td className="px-6 py-4 text-gray-500">{invite.category}</td>
+                          <td className="px-6 py-4">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border" style={{
+                              background: SIDE_COLORS[invite.side || 'Neutral']?.bg,
+                              borderColor: SIDE_COLORS[invite.side || 'Neutral']?.border,
+                              color: SIDE_COLORS[invite.side || 'Neutral']?.text,
+                            }}>{invite.side || 'Neutral'}</span>
+                          </td>
+                          <td className="px-6 py-4 text-gray-500">{invite.maxGuests}</td>
+                          <td className="px-6 py-4">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                              invite.rsvpSubmitted
+                                ? 'bg-green-50 text-green-700 border-green-200'
+                                : 'bg-amber-50 text-amber-700 border-amber-200'
+                            }`}>{invite.rsvpSubmitted ? "RSVP'd" : 'Pending'}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <a href={`${FRONTEND_URL}/invite/${invite.inviteToken}`} target="_blank" rel="noopener noreferrer"
+                                className="font-mono text-[#722F37] hover:underline text-[10px] max-w-[180px] truncate block">
+                                {FRONTEND_URL}/invite/{invite.inviteToken}
+                              </a>
+                              <button onClick={() => handleCopyLink(invite.inviteToken, invite.id)}
+                                className={`shrink-0 p-1.5 rounded-lg border transition cursor-pointer ${copiedId===invite.id ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-700'}`}>
+                                {copiedId===invite.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                              </button>
+                              <button onClick={() => handleCopyWithMessage(invite.inviteToken, invite.familyName, `msg-${invite.id}`)}
+                                title="Copy invitation with message"
+                                className={`shrink-0 px-2 py-1.5 rounded-lg border transition cursor-pointer text-[10px] font-bold ${
+                                  copiedMsgId === `msg-${invite.id}`
+                                    ? 'bg-blue-50 border-blue-300 text-blue-700'
+                                    : 'bg-gray-50 border-gray-200 text-gray-400 hover:border-[#722F37]/30 hover:text-[#722F37]'
+                                }`}>
+                                {copiedMsgId === `msg-${invite.id}` ? '✓ Copied!' : '✉️ +Msg'}
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            {invite.rsvp?.checkedIn
+                              ? <span className="text-green-600 font-bold">✓ Checked In</span>
+                              : invite.rsvp?.checkedOut
+                              ? <span className="text-red-500 font-bold">Checked Out</span>
+                              : <span className="text-gray-300">—</span>}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ══ TAB: MESSAGE TEMPLATE ══ */}
         {activeTab === 'message' && (
