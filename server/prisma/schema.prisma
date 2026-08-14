@@ -71,6 +71,8 @@ model GalleryPhoto {
 model Donation {
   id              Int       @id @default(autoincrement())
   donorName       String?
+  email           String?
+  message         String?
   amount          Float
   reference       String    @unique
   status          String

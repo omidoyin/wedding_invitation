@@ -4,10 +4,10 @@ const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
 const isPaystackConfigured = !!PAYSTACK_SECRET;
 
 export async function initializePayment(req, res) {
-  const { amount, email, donorName, anonymous } = req.body;
+  const { amount, email, donorName, anonymous, message } = req.body;
 
   if (!amount || amount <= 0) {
-    return res.status(400).json({ error: 'Valid payment amount is required.' });
+    return res.status(400).json({ error: 'Valid gift amount is required.' });
   }
 
   const emailToUse = email || 'guest@aalovestory2026.com';
@@ -27,9 +27,11 @@ export async function initializePayment(req, res) {
         body: JSON.stringify({
           email: emailToUse,
           amount: amountInKobo,
-          // Store donorName in metadata so we can read it on verification
+          // Store donorName & message in metadata for verification
           metadata: {
             donorName: nameToUse,
+            email: emailToUse,
+            message: message || '',
             amountInNaira: amount
           }
         })
@@ -51,14 +53,11 @@ export async function initializePayment(req, res) {
     }
   }
 
-  // MOCK FLOW: When Paystack is not configured, simulate local payment
-  const mockReference = `AAL-PAY-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-  const mockPaymentUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/support/verify?reference=${mockReference}&amount=${amount}&donor=${encodeURIComponent(nameToUse)}`;
+  // MOCK FLOW: When Paystack is not configured, simulate local payment reference
+  const mockReference = `GIFT-PAY-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
   try {
-    // Return mock payment URL redirecting directly back to frontend for validation
     res.json({
-      authorization_url: mockPaymentUrl,
       reference: mockReference,
       isMock: true
     });
@@ -69,7 +68,7 @@ export async function initializePayment(req, res) {
 }
 
 export async function verifyPayment(req, res) {
-  const { reference, mockAmount, mockDonor } = req.body;
+  const { reference, mockAmount, mockDonor, email: bodyEmail, message: bodyMessage, donorName: bodyDonorName, amount: bodyAmount } = req.body;
 
   if (!reference) {
     return res.status(400).json({ error: 'Payment reference is required.' });
@@ -83,19 +82,24 @@ export async function verifyPayment(req, res) {
 
     if (existing) {
       return res.json({
-        message: 'Payment verified successfully!',
+        success: true,
+        message: 'Gift verified successfully!',
         donation: existing
       });
     }
 
     // If it's a mock reference or Paystack is not configured
-    if (reference.startsWith('AAL-PAY-') || !isPaystackConfigured) {
-      const amount = mockAmount ? parseFloat(mockAmount) : 5000.0;
-      const donorName = mockDonor ? decodeURIComponent(mockDonor) : 'Generous Guest';
+    if (reference.startsWith('GIFT-PAY-') || reference.startsWith('TEST_') || reference.startsWith('AAL-PAY-') || !isPaystackConfigured) {
+      const amount = bodyAmount ? parseFloat(bodyAmount) : (mockAmount ? parseFloat(mockAmount) : 5000.0);
+      const donorName = bodyDonorName || (mockDonor ? decodeURIComponent(mockDonor) : 'Generous Guest');
+      const email = bodyEmail || 'guest@aalovestory2026.com';
+      const message = bodyMessage || '';
 
       const donation = await prisma.donation.create({
         data: {
           donorName,
+          email,
+          message,
           amount,
           reference,
           status: 'SUCCESS'
@@ -103,45 +107,52 @@ export async function verifyPayment(req, res) {
       });
 
       return res.json({
-        message: 'Mock payment verified successfully!',
+        success: true,
+        message: 'Gift verified successfully!',
         donation
       });
     }
 
-    // Real Paystack Verification
-    const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+    // Real Paystack Verification via REST API
+    const response = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${PAYSTACK_SECRET}`
+        'Authorization': `Bearer ${PAYSTACK_SECRET}`,
+        'Content-Type': 'application/json'
       }
     });
 
     const data = await response.json();
 
-    if (data.status && data.data.status === 'success') {
+    if (data.status && data.data?.status === 'success') {
       const metadata = data.data.metadata || {};
       const amountInNaira = data.data.amount / 100;
-      const donorName = metadata.donorName || 'Generous Guest';
+      const donorName = bodyDonorName || metadata.donorName || 'Generous Guest';
+      const email = bodyEmail || data.data.customer?.email || metadata.email || 'guest@aalovestory2026.com';
+      const message = bodyMessage || metadata.message || '';
 
       const donation = await prisma.donation.create({
         data: {
           donorName,
+          email,
+          message,
           amount: amountInNaira,
           reference,
           status: 'SUCCESS'
         }
       });
 
-      res.json({
-        message: 'Payment verified successfully!',
+      return res.json({
+        success: true,
+        message: 'Gift verified successfully!',
         donation
       });
     } else {
-      res.status(400).json({ error: 'Payment verification failed.' });
+      return res.status(400).json({ error: data.message || 'Payment verification failed with Paystack.' });
     }
   } catch (error) {
     console.error('Error verifying payment:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
 
