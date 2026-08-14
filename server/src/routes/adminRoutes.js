@@ -3,6 +3,7 @@ import {
   login, 
   createInvite, 
   getInvites, 
+  updateInviteSent,
   getDashboardStats, 
   exportGuests, 
   getPendingPhotos,
@@ -23,6 +24,8 @@ router.post('/login', login);
 // Admin dashboard actions
 router.post('/invites', authenticate, authorize(['Admin']), createInvite);
 router.get('/invites', authenticate, authorize(['Admin', 'Staff/Bouncer']), getInvites);
+router.patch('/invites/:id/sent', authenticate, authorize(['Admin']), updateInviteSent);
+router.put('/invites/:id/sent', authenticate, authorize(['Admin']), updateInviteSent);
 router.get('/stats', authenticate, authorize(['Admin']), getDashboardStats);
 router.get('/export', authenticate, authorize(['Admin']), exportGuests);
 

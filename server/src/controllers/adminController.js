@@ -91,8 +91,20 @@ export async function createInvite(req, res) {
   }
 }
 
+let isSentColumnChecked = false;
+async function ensureIsSentColumn() {
+  if (isSentColumnChecked) return;
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Invite" ADD COLUMN IF NOT EXISTS "isSent" BOOLEAN NOT NULL DEFAULT false;`);
+    isSentColumnChecked = true;
+  } catch (e) {
+    console.warn('Could not auto-add isSent column:', e.message);
+  }
+}
+
 export async function getInvites(req, res) {
   try {
+    await ensureIsSentColumn();
     const invites = await prisma.invite.findMany({
       include: { rsvp: true },
       orderBy: { createdAt: 'desc' }
@@ -100,6 +112,36 @@ export async function getInvites(req, res) {
     res.json(invites);
   } catch (error) {
     console.error('Error fetching invites:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function updateInviteSent(req, res) {
+  const { id } = req.params;
+  const { isSent } = req.body;
+
+  try {
+    await ensureIsSentColumn();
+    const inviteId = parseInt(id);
+    let targetSent = isSent;
+
+    if (typeof targetSent !== 'boolean') {
+      const existing = await prisma.invite.findUnique({ where: { id: inviteId } });
+      if (!existing) {
+        return res.status(404).json({ error: 'Invite not found' });
+      }
+      targetSent = !existing.isSent;
+    }
+
+    const updatedInvite = await prisma.invite.update({
+      where: { id: inviteId },
+      data: { isSent: targetSent },
+      include: { rsvp: true }
+    });
+
+    res.json({ message: 'Invite sent status updated', invite: updatedInvite });
+  } catch (error) {
+    console.error('Error updating invite sent status:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }
@@ -164,6 +206,8 @@ export async function exportGuests(req, res) {
       { header: 'Category', key: 'category', width: 15 },
       { header: 'Side', key: 'side', width: 15 },
       { header: 'Max Allowed Guests', key: 'maxGuests', width: 18 },
+      { header: 'Invite Sent', key: 'isSent', width: 14 },
+      { header: 'Link Opened', key: 'invitationOpened', width: 15 },
       { header: 'RSVP Status', key: 'rsvpStatus', width: 15 },
       { header: 'Attendance Count', key: 'attendanceCount', width: 18 },
       { header: 'Children Attending', key: 'childrenAttending', width: 18 },
@@ -195,6 +239,8 @@ export async function exportGuests(req, res) {
         category: invite.category,
         side: invite.side,
         maxGuests: invite.maxGuests,
+        isSent: invite.isSent ? 'Yes' : 'No',
+        invitationOpened: invite.invitationOpened ? 'Yes' : 'No',
         rsvpStatus: invite.rsvpSubmitted ? 'Submitted' : 'Pending',
         attendanceCount: invite.rsvp ? invite.rsvp.attendanceCount : 0,
         childrenAttending: invite.rsvp ? (invite.rsvp.anyChildren ? 'Yes' : 'No') : 'N/A',

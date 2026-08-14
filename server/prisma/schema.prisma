@@ -17,6 +17,7 @@ model Invite {
   rsvpSubmitted     Boolean   @default(false)
   side              String    @default("Neutral") // Bride, Groom, Neutral
   seatingPublished  Boolean   @default(false)
+  isSent            Boolean   @default(false)
   createdAt         DateTime  @default(now())
   rsvp              RSVP?
 }

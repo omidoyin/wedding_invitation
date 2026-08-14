@@ -5,7 +5,7 @@ import {
   Users, CheckSquare, ShieldCheck, LogOut, Plus, 
   Trash2, Check, Download, Image, DollarSign, RefreshCw, Copy,
   ChevronDown, X, Edit2, Table2, GripVertical, Eye, EyeOff,
-  AlertCircle, ArrowRight, LayoutGrid
+  AlertCircle, ArrowRight, LayoutGrid, Send, CheckCircle2
 } from 'lucide-react';
 
 /* ─────────────────── helpers ─────────────────── */
@@ -46,6 +46,9 @@ export default function AdminDashboard() {
   const [dragTarget, setDragTarget]             = useState(null); // tableId being dragged over
   const [filterSide, setFilterSide]             = useState('All');
   const [filterCategory, setFilterCategory]     = useState('All');
+  const [filterSent, setFilterSent]             = useState('All'); // 'All', 'Sent', 'Not Sent'
+  const [filterStage, setFilterStage]           = useState('All'); // 'All', 'Not Opened', 'Opened', "RSVP'd"
+  const [togglingSentId, setTogglingSentId]     = useState(null);
   const [keepFamily, setKeepFamily]             = useState(true);
 
   /* UI */
@@ -155,6 +158,25 @@ export default function AdminDashboard() {
       setCopiedMsgId(id);
       setTimeout(() => setCopiedMsgId(null), 2500);
     });
+  };
+
+  const handleToggleSent = async (inviteId, currentSentState) => {
+    const newSentState = !currentSentState;
+
+    // Optimistic update
+    setInvites(prev => prev.map(inv => inv.id === inviteId ? { ...inv, isSent: newSentState } : inv));
+    setTogglingSentId(inviteId);
+
+    try {
+      await axios.patch(`${API_URL}/admin/invites/${inviteId}/sent`, { isSent: newSentState }, { headers });
+    } catch (err) {
+      console.error('Error updating invite sent status:', err);
+      // Revert optimistic update
+      setInvites(prev => prev.map(inv => inv.id === inviteId ? { ...inv, isSent: currentSentState } : inv));
+      alert('Failed to update sent status.');
+    } finally {
+      setTogglingSentId(null);
+    }
   };
 
   /* ── seating handlers ── */
@@ -465,20 +487,78 @@ export default function AdminDashboard() {
           const filteredInvites = invites.filter(invite => {
             const matchSide = filterSide === 'All' || (invite.side || 'Neutral') === filterSide;
             const matchCat  = filterCategory === 'All' || (invite.category || 'Family') === filterCategory;
-            return matchSide && matchCat;
+            const matchSent = filterSent === 'All'
+              || (filterSent === 'Sent' && invite.isSent)
+              || (filterSent === 'Not Sent' && !invite.isSent);
+            const matchStage = filterStage === 'All'
+              || (filterStage === 'Not Opened' && !invite.invitationOpened && !invite.rsvpSubmitted)
+              || (filterStage === 'Opened' && invite.invitationOpened && !invite.rsvpSubmitted)
+              || (filterStage === "RSVP'd" && invite.rsvpSubmitted);
+            return matchSide && matchCat && matchSent && matchStage;
           });
+
+          const sentCount   = invites.filter(i => i.isSent).length;
+          const openedCount = invites.filter(i => i.invitationOpened).length;
+          const rsvpCount   = invites.filter(i => i.rsvpSubmitted).length;
 
           return (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden space-y-0">
               <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                  <h3 className="font-playfair text-base font-bold text-gray-800">
-                    Guest Invitations ({filteredInvites.length}{filteredInvites.length !== invites.length ? ` of ${invites.length}` : ''})
+                  <h3 className="font-playfair text-base font-bold text-gray-800 flex flex-wrap items-center gap-2">
+                    <span>Guest Invitations ({filteredInvites.length}{filteredInvites.length !== invites.length ? ` of ${invites.length}` : ''})</span>
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      {sentCount} / {invites.length} Sent
+                    </span>
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                      {openedCount} / {invites.length} Opened
+                    </span>
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200">
+                      {rsvpCount} / {invites.length} RSVP'd
+                    </span>
                   </h3>
                 </div>
 
                 {/* Filters */}
                 <div className="flex flex-wrap items-center gap-3">
+                  {/* Stage Filter */}
+                  <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 text-xs">
+                    <span className="text-gray-400 font-bold px-2 text-[10px] uppercase">Stage:</span>
+                    {['All', 'Not Opened', 'Opened', "RSVP'd"].map(stage => (
+                      <button
+                        key={stage}
+                        type="button"
+                        onClick={() => setFilterStage(stage)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                          filterStage === stage
+                            ? 'bg-[#722F37] text-white shadow-xs'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                        }`}
+                      >
+                        {stage}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Sent Filter */}
+                  <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 text-xs">
+                    <span className="text-gray-400 font-bold px-2 text-[10px] uppercase">Sent:</span>
+                    {['All', 'Sent', 'Not Sent'].map(status => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => setFilterSent(status)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                          filterSent === status
+                            ? 'bg-[#722F37] text-white shadow-xs'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                        }`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+
                   {/* Side Filter */}
                   <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 text-xs">
                     <span className="text-gray-400 font-bold px-2 text-[10px] uppercase">Side:</span>
@@ -527,6 +607,8 @@ export default function AdminDashboard() {
                       <th className="px-6 py-3.5">Category</th>
                       <th className="px-6 py-3.5">Side</th>
                       <th className="px-6 py-3.5">Max</th>
+                      <th className="px-6 py-3.5">Sent Status</th>
+                      <th className="px-6 py-3.5">Link Opened</th>
                       <th className="px-6 py-3.5">RSVP</th>
                       <th className="px-6 py-3.5">Invite Link</th>
                       <th className="px-6 py-3.5">Checked In</th>
@@ -535,14 +617,27 @@ export default function AdminDashboard() {
                   <tbody className="divide-y divide-gray-50">
                     {filteredInvites.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-6 py-8 text-center text-gray-400 italic">
+                        <td colSpan={9} className="px-6 py-8 text-center text-gray-400 italic">
                           No invitations found matching the selected filters.
                         </td>
                       </tr>
                     ) : (
                       filteredInvites.map(invite => (
-                        <tr key={invite.id} className="group hover:bg-gray-50/50 transition">
-                          <td className="px-6 py-4 font-bold text-gray-800 sticky left-0 z-10 bg-white group-hover:bg-gray-50 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] min-w-[140px]">{invite.familyName}</td>
+                        <tr
+                          key={invite.id}
+                          className={`group transition ${
+                            invite.isSent
+                              ? 'bg-emerald-50/60 hover:bg-emerald-100/50'
+                              : 'bg-white hover:bg-amber-50/20'
+                          }`}
+                        >
+                          <td className={`px-6 py-4 font-bold text-gray-800 sticky left-0 z-10 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] min-w-[140px] transition ${
+                            invite.isSent
+                              ? 'bg-[#ecfdf5] group-hover:bg-[#d1fae5]'
+                              : 'bg-white group-hover:bg-amber-50/20'
+                          }`}>
+                            {invite.familyName}
+                          </td>
                           <td className="px-6 py-4 text-gray-500">{invite.category}</td>
                           <td className="px-6 py-4">
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border" style={{
@@ -552,6 +647,44 @@ export default function AdminDashboard() {
                             }}>{invite.side || 'Neutral'}</span>
                           </td>
                           <td className="px-6 py-4 text-gray-500">{invite.maxGuests}</td>
+                          <td className="px-6 py-4">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleSent(invite.id, invite.isSent)}
+                              disabled={togglingSentId === invite.id}
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold transition cursor-pointer shadow-xs ${
+                                invite.isSent
+                                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200/80'
+                                  : 'bg-amber-100/70 text-amber-800 border-amber-300 hover:bg-amber-200/80'
+                              }`}
+                              title={invite.isSent ? "Mark as Not Sent" : "Mark as Sent"}
+                            >
+                              {invite.isSent ? (
+                                <>
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                  <span>Sent</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Send className="w-3 h-3 text-amber-700 shrink-0" />
+                                  <span>Not Sent</span>
+                                </>
+                              )}
+                            </button>
+                          </td>
+                          <td className="px-6 py-4">
+                            {invite.invitationOpened ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                                <Eye className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                                <span>Opened</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-full bg-gray-50 text-gray-400 border border-gray-200">
+                                <EyeOff className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                <span>Not Opened</span>
+                              </span>
+                            )}
+                          </td>
                           <td className="px-6 py-4">
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                               invite.rsvpSubmitted
