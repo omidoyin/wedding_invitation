@@ -16,9 +16,10 @@ function GlobalMusicLayout({ children }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [bubbles, setBubbles] = useState([]);
   const audioRef = useRef(null);
+  const wasPlayingBeforeHideRef = useRef(false);
   const location = useLocation();
 
-  // Initialize Audio
+  // Initialize Audio & Page Visibility listeners
   useEffect(() => {
     audioRef.current = new Audio('/now_and_always.mp3');
     audioRef.current.loop = true;
@@ -27,13 +28,46 @@ function GlobalMusicLayout({ children }) {
     const handleStartMusic = () => {
       audioRef.current.play().then(() => {
         setIsPlaying(true);
+        wasPlayingBeforeHideRef.current = true;
       }).catch(err => console.log("Audio play blocked or failed:", err));
     };
 
+    // Pause music when browser tab is minimized, switched, or backgrounded
+    const handleVisibilityChange = () => {
+      if (!audioRef.current) return;
+
+      if (document.hidden || document.visibilityState === 'hidden') {
+        if (!audioRef.current.paused) {
+          wasPlayingBeforeHideRef.current = true;
+          audioRef.current.pause();
+          setIsPlaying(false);
+        }
+      } else if (document.visibilityState === 'visible') {
+        // Resume playback if it was actively playing before leaving/minimizing
+        if (wasPlayingBeforeHideRef.current) {
+          audioRef.current.play().then(() => {
+            setIsPlaying(true);
+          }).catch(err => console.log("Audio resume blocked or failed:", err));
+        }
+      }
+    };
+
+    // Pause music on page unloads / mobile app switching
+    const handlePageHide = () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      }
+    };
+
     window.addEventListener('play-wedding-music', handleStartMusic);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
 
     return () => {
       window.removeEventListener('play-wedding-music', handleStartMusic);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
       if (audioRef.current) {
         audioRef.current.pause();
       }
@@ -68,9 +102,11 @@ function GlobalMusicLayout({ children }) {
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
+      wasPlayingBeforeHideRef.current = false;
     } else {
       audioRef.current.play().then(() => {
         setIsPlaying(true);
+        wasPlayingBeforeHideRef.current = true;
       }).catch(err => console.log(err));
     }
   };

@@ -529,50 +529,50 @@ export default function CheckinDashboard() {
             <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-black border border-gray-200 flex items-center justify-center shadow-inner">
               
               {/* WebRTC Video stream */}
-              {cameraActive && (
+              {/* {cameraActive && (
                 <video 
                   ref={videoRef} 
                   autoPlay 
                   playsInline 
                   className="w-full h-full object-cover transform scale-x-[-1]"
                 />
-              )}
+              )} */}
 
               {/* Snapshot captured preview */}
-              {capturedUrl && (
+              {/* {capturedUrl && (
                 <img 
                   src={capturedUrl} 
                   alt="Captured attendee" 
                   className="w-full h-full object-cover"
                 />
-              )}
+              )} */}
 
               {/* Local File fallback preview */}
-              {fileUrl && (
+              {/* {fileUrl && (
                 <img 
                   src={fileUrl} 
                   alt="Uploaded file" 
                   className="w-full h-full object-cover"
                 />
-              )}
+              )} */}
 
               {/* Inactive state */}
-              {!cameraActive && !capturedUrl && !fileUrl && (
+              {/* {!cameraActive && !capturedUrl && !fileUrl && (
                 <div className="text-center p-4">
                   <Camera className="w-10 h-10 text-gray-300 mx-auto mb-2" />
                   <p className="text-xs text-gray-400 italic">Camera inactive. Click "Start Camera" or select a file below.</p>
                 </div>
-              )}
+              )} */}
             </div>
 
             {/* Hidden canvas for video captures */}
-            <canvas ref={canvasRef} className="hidden" />
+            {/* <canvas ref={canvasRef} className="hidden" /> */}
 
             {/* Modal Controls */}
             <div className="space-y-4">
               
               {/* Camera Trigger controls */}
-              <div className="flex justify-center gap-3">
+              {/* <div className="flex justify-center gap-3">
                 {cameraActive ? (
                   <button
                     onClick={capturePhoto}
@@ -588,10 +588,10 @@ export default function CheckinDashboard() {
                     <RefreshCcw className="w-4 h-4 text-[#722F37]" /> {capturedUrl || fileUrl ? 'RE-TAKE PHOTO' : 'START CAMERA'}
                   </button>
                 )}
-              </div>
+              </div> */}
 
               {/* File Input Fallback Selector */}
-              <div className="text-center">
+              {/* <div className="text-center">
                 <span className="text-[10px] text-gray-400 uppercase tracking-widest block mb-2 font-medium">Or Use Local Image File</span>
                 <label className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-200 rounded-xl bg-[#FCFCFD] text-gray-700 hover:border-gray-300 text-xs font-semibold cursor-pointer select-none transition shadow-sm">
                   <FileImage className="w-3.5 h-3.5 text-wedding-wine" /> SELECT FILE
@@ -602,11 +602,11 @@ export default function CheckinDashboard() {
                     className="hidden"
                   />
                 </label>
-              </div>
+              </div> */}
 
 
               {/* Seat Number Assignment */}
-              <div className="pt-3 border-t border-gray-150 text-left">
+              {/* <div className="pt-3 border-t border-gray-150 text-left">
                 <label className="text-[10px] text-[#722F37] uppercase tracking-widest block mb-2 font-bold">
                   🪑 Assign Seat Number <span className="text-gray-400 font-normal normal-case">(optional)</span>
                 </label>
@@ -634,7 +634,7 @@ export default function CheckinDashboard() {
                 {seatMsg && (
                   <p className="text-[10px] mt-1.5 text-green-700 font-semibold">{seatMsg}</p>
                 )}
-              </div>
+              </div> */}
 
               {/* Complete Checkin CTA */}
               <button
@@ -646,7 +646,7 @@ export default function CheckinDashboard() {
                   ? 'UPLOADING & REGISTERING...' 
                   : (capturedBlob || fileFallback) 
                     ? 'COMPLETE ENTRY CHECK-IN' 
-                    : 'CHECK IN WITHOUT PHOTO'}
+                    : 'CHECK IN'}
               </button>
             </div>
 

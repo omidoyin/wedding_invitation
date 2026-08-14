@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { motion } from 'framer-motion';
 import axios from 'axios';
 import confetti from 'canvas-confetti';
 import QRCode from 'qrcode';
@@ -10,12 +9,35 @@ import {
   Camera, Upload, Download, CheckCircle, ChevronRight, Info, 
   ChevronDown
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MainPage() {
   const { token } = useParams();
   const navigate = useNavigate();
   const [invite, setInvite] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Scroll arrow visibility state
+  const [showScrollArrow, setShowScrollArrow] = useState(true);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      
+      // Hide when user reaches within 150px of the bottom of the page
+      if (scrollTop + windowHeight >= documentHeight - 150) {
+        setShowScrollArrow(false);
+      } else {
+        setShowScrollArrow(true);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   // RSVP success state
   const [rsvpSuccess, setRsvpSuccess] = useState(false);
@@ -549,27 +571,7 @@ export default function MainPage() {
             </a>
           </motion.div>
 
-           <div className="absolute bottom-2 left- right-32 md:left-1/2 md:-translate-x-1/2 md:right-auto  flex flex-col md:flex-row items-center justify-end w-full gap-4 animate-slide-up text-[#FAF8F5] select-none">
-           {/* Bouncing scroll-down arrow */}
-        <motion.div
-          className="absolute bottom-10  z-10 flex flex-col items-center gap-1 cursor-pointer"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.6 }}
-          onClick={() => document.getElementById('rsvp')?.scrollIntoView({ behavior: 'smooth' })}
-        >
-          <span className="text-[10px] text-wedding-gold/60 uppercase tracking-[0.3em] font-semibold">Scroll</span>
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <ChevronDown className="w-7 h-7 text-wedding-gold drop-shadow-[0_0_8px_rgba(212,175,55,0.6)]" />
-          </motion.div>
-        </motion.div>
         </div>
-        </div>
-
-      
       </section>
 
       {/* ── COUPLE PHOTO CAROUSEL ── */}
@@ -1066,12 +1068,34 @@ export default function MainPage() {
                 })()}
               </div>
 
-              <div className="max-w-md bg-[#240A0C]/50 border border-wedding-gold/15 p-4 rounded-xl text-left mt-4">
-                <p className="text-[11px] text-wedding-gold font-bold uppercase tracking-wider mb-2">Important Instructions:</p>
-                <ul className="text-[11px] text-wedding-lightBeige/90 space-y-1.5 list-disc pl-4">
-                  <li>Please **save or download the QR Card(s)** to your device.</li>
-                  <li>Present this serial number or QR card to the check-in bouncers at the wedding venue entrance.</li>
-                  <li>Each QR code card authorizes entry for **one registered guest**.</li>
+              <div className="max-w-xl mx-auto w-full bg-gradient-to-br from-[#3D1B1E] via-[#2A0C10] to-[#1F0709] border-2 border-wedding-gold/60 p-6 sm:p-7 rounded-2xl text-left mt-6 shadow-[0_12px_35px_rgba(0,0,0,0.6)] relative overflow-hidden">
+                {/* Gold header divider */}
+                <div className="flex items-center gap-2.5 mb-4 border-b border-wedding-gold/30 pb-3">
+                  <Info className="w-6 h-6 text-wedding-gold shrink-0 animate-pulse" />
+                  <h4 className="text-base sm:text-lg font-playfair font-extrabold uppercase tracking-widest text-wedding-gold">
+                    Important Instructions:
+                  </h4>
+                </div>
+
+                <ul className="text-xs sm:text-sm md:text-base text-[#FAF8F5] space-y-3 font-poppins leading-relaxed">
+                  <li className="flex items-start gap-3">
+                    <span className="text-wedding-gold text-lg font-bold shrink-0 leading-none mt-0.5">•</span>
+                    <span>
+                      Please <strong className="text-wedding-gold font-bold underline underline-offset-2">save or download the QR Card(s)</strong> to your device.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-wedding-gold text-lg font-bold shrink-0 leading-none mt-0.5">•</span>
+                    <span>
+                      Present this serial number or QR card to the <strong className="text-wedding-gold font-bold underline underline-offset-2">check-in bouncers</strong> at the wedding venue entrance.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-wedding-gold text-lg font-bold shrink-0 leading-none mt-0.5">•</span>
+                    <span>
+                      Each QR code card authorizes entry for <strong className="text-wedding-gold font-bold underline underline-offset-2">one registered guest</strong>.
+                    </span>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -1244,22 +1268,49 @@ export default function MainPage() {
       </section>
 
       {/* Decorative footer */}
-      <footer className="md:py-20 py-10 border-t border-wedding-gold/10 text-center bg-wedding-darkCard/40">
-        <h2 className="font-playfair text-xl text-gold-gradient tracking-widest">AALOVESTORY2026</h2>
-        <p className="text-xs text-wedding-beige/60 font-poppins mt-2 tracking-wider">Ayodeji & Adesewa — Forever & Always</p>
-        <p className="text-[12px] font-poppins tracking-[0.2em] mt-8 uppercase  font-playfair text-wedding-wine tracking-wider font-bold">© 2026 AALOVESTORY. All Rights Reserved.</p>
+      <footer className="md:py-20 py-12 border-t border-wedding-gold/20 text-center bg-[#1F0A0D] text-[#FAF8F5]">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="font-playfair text-2xl text-gold-gradient tracking-widest font-bold">AALOVESTORY2026</h2>
+          <p className="text-xs text-[#FAF8F5]/70 font-poppins mt-2 tracking-wider">Ayodeji &amp; Adesewa — Forever &amp; Always</p>
 
-        {/* Builder credit */}
-        <div className="mt-6 flex flex-col items-center gap-1">
-          <p className="text-[12px]  tracking-widest uppercase font-playfair text-wedding-wine tracking-wider font-bold">Website designed & built by</p>
-          <a
-            href="https://wa.me/2348105281572"
-            target="_blank"
-            rel="noreferrer"
-            className="text-[12px]  hover:text-wedding-gold/70 transition-colors duration-300 font-bold tracking-wider font-playfair text-wedding-wine tracking-wider font-bold"
-          >
-            Veleonsolution · 08105281572
-          </a>
+          {/* Builder Credit & Advert Section */}
+          <div className="mt-10 mb-10 p-6 sm:p-10 rounded-3xl bg-gradient-to-b from-[#2D1216] via-[#38161B] to-[#250E11] border-2 border-wedding-gold/40 shadow-[0_15px_40px_rgba(0,0,0,0.5)] relative overflow-hidden max-w-2xl mx-auto">
+            {/* Subtle decorative gold line glow */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[2px] bg-gradient-to-r from-transparent via-wedding-gold to-transparent opacity-80" />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-[2px] bg-gradient-to-r from-transparent via-wedding-gold to-transparent opacity-80" />
+
+            <span className="inline-block text-[11px] font-playfair font-semibold uppercase tracking-[0.25em] text-wedding-gold bg-wedding-gold/10 px-4 py-1.5 rounded-full border border-wedding-gold/30 mb-4">
+              Website Designed &amp; Built By
+            </span>
+
+            <h3 className="font-playfair text-2xl sm:text-3xl font-extrabold text-wedding-gold tracking-wide mb-2">
+              Veleon Solution
+            </h3>
+
+            <p className="text-xs sm:text-sm text-[#FAF8F5]/85 font-poppins max-w-md mx-auto mb-6 leading-relaxed">
+              Need a custom wedding website, digital invitation, or premium web app for your special event or business?
+            </p>
+
+            <a
+              href="https://wa.me/2348105281572?text=Hello%20Veleon%20Solution,%20I%20saw%20the%20AALOVESTORY2026%20wedding%20website%20and%20I'd%20like%20to%20make%20an%20enquiry."
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-base sm:text-lg rounded-2xl shadow-[0_6px_25px_rgba(37,211,102,0.4)] hover:shadow-[0_8px_30px_rgba(37,211,102,0.6)] transition-all duration-300 transform hover:-translate-y-0.5 border border-white/20 active:scale-95 group cursor-pointer"
+            >
+              <svg className="w-6 h-6 fill-current text-white transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24">
+                <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.94 9.94 0 001.353 5.033L2 22l5.129-1.34A9.949 9.949 0 0012.01 22c5.506 0 9.989-4.478 9.989-9.984 0-5.507-4.483-9.984-9.987-9.984zm5.795 14.129c-.244.688-1.423 1.314-1.96 1.365-.502.047-1.144.208-3.774-.881-3.238-1.34-5.309-4.646-5.472-4.863-.16-.217-1.314-1.751-1.314-3.34 0-1.589.836-2.37 1.134-2.695.297-.326.65-.407.868-.407.217 0 .434.002.624.011.202.01.472-.077.738.56.271.65.922 2.254 1.003 2.417.081.163.136.353.027.57-.109.217-.163.353-.326.543-.163.19-.342.424-.488.57-.163.163-.334.34-.144.666.19.326.842 1.39 1.808 2.25 1.242 1.106 2.292 1.45 2.618 1.613.326.163.516.136.706-.081.19-.217.814-.949 1.031-1.275.217-.326.434-.271.733-.163.299.109 1.899.896 2.225 1.059.326.163.543.244.624.38.081.136.081.787-.163 1.475z"/>
+              </svg>
+              <span>Make Enquiries on WhatsApp</span>
+            </a>
+
+            <div className="mt-4 text-xs text-wedding-gold/90 font-medium tracking-wider">
+              Direct Contact: <a href="tel:08105281572" className="underline hover:text-white transition-colors">08105281572</a>
+            </div>
+          </div>
+
+          <p className="text-[12px] font-poppins tracking-[0.2em] uppercase text-wedding-gold/80 font-bold">
+            © 2026 AALOVESTORY. All Rights Reserved.
+          </p>
         </div>
       </footer>
 
@@ -1327,6 +1378,31 @@ export default function MainPage() {
           </div>
         </div>
       )}
+
+      {/* Floating Sticky Scroll Arrow */}
+      <AnimatePresence>
+        {showScrollArrow && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.3 }}
+            onClick={() => window.scrollBy({ top: window.innerHeight * 0.75, behavior: 'smooth' })}
+            className={`fixed ${invite && invite.rsvpSubmitted && !seatBannerDismissed ? 'bottom-24' : 'bottom-6'} left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-1 cursor-pointer group select-none`}
+            aria-label="Scroll Down"
+          >
+            <div className="bg-[#2A0C10]/95 hover:bg-[#3D1B1E] border border-wedding-gold/70 shadow-[0_6px_25px_rgba(0,0,0,0.6)] backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 transition-all duration-300 group-hover:border-wedding-gold group-hover:scale-105">
+              <span className="text-[11px] font-playfair font-bold text-wedding-gold tracking-[0.2em] uppercase">Scroll</span>
+              <motion.div
+                animate={{ y: [0, 5, 0] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <ChevronDown className="w-4 h-4 text-wedding-gold" />
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
 
 
