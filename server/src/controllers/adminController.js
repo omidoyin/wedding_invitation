@@ -146,6 +146,35 @@ export async function updateInviteSent(req, res) {
   }
 }
 
+export async function updateInviteSlots(req, res) {
+  const { id } = req.params;
+  const { maxGuests, slots } = req.body;
+
+  try {
+    const inviteId = parseInt(id);
+    if (isNaN(inviteId)) {
+      return res.status(400).json({ error: 'Invalid invite ID' });
+    }
+
+    const targetSlots = maxGuests !== undefined ? parseInt(maxGuests) : (slots !== undefined ? parseInt(slots) : null);
+
+    if (targetSlots === null || isNaN(targetSlots) || targetSlots < 1) {
+      return res.status(400).json({ error: 'Slots / Max guests must be a positive integer (at least 1).' });
+    }
+
+    const updatedInvite = await prisma.invite.update({
+      where: { id: inviteId },
+      data: { maxGuests: targetSlots },
+      include: { rsvp: true }
+    });
+
+    res.json({ message: 'Invite slots updated successfully', invite: updatedInvite });
+  } catch (error) {
+    console.error('Error updating invite slots:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 export async function getDashboardStats(req, res) {
   try {
     const totalInvitesCount = await prisma.invite.count();

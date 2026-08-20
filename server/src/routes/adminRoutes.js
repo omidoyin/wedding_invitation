@@ -4,6 +4,7 @@ import {
   createInvite, 
   getInvites, 
   updateInviteSent,
+  updateInviteSlots,
   getDashboardStats, 
   exportGuests, 
   getPendingPhotos,
@@ -26,6 +27,10 @@ router.post('/invites', authenticate, authorize(['Admin']), createInvite);
 router.get('/invites', authenticate, authorize(['Admin', 'Staff/Bouncer']), getInvites);
 router.patch('/invites/:id/sent', authenticate, authorize(['Admin']), updateInviteSent);
 router.put('/invites/:id/sent', authenticate, authorize(['Admin']), updateInviteSent);
+router.patch('/invites/:id/slots', authenticate, authorize(['Admin']), updateInviteSlots);
+router.put('/invites/:id/slots', authenticate, authorize(['Admin']), updateInviteSlots);
+router.patch('/invites/:id', authenticate, authorize(['Admin']), updateInviteSlots);
+router.put('/invites/:id', authenticate, authorize(['Admin']), updateInviteSlots);
 router.get('/stats', authenticate, authorize(['Admin']), getDashboardStats);
 router.get('/export', authenticate, authorize(['Admin']), exportGuests);
 

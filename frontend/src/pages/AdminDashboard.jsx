@@ -49,6 +49,7 @@ export default function AdminDashboard() {
   const [filterSent, setFilterSent]             = useState('All'); // 'All', 'Sent', 'Not Sent'
   const [filterStage, setFilterStage]           = useState('All'); // 'All', 'Not Opened', 'Opened', "RSVP'd"
   const [togglingSentId, setTogglingSentId]     = useState(null);
+  const [updatingSlotId, setUpdatingSlotId]     = useState(null);
   const [keepFamily, setKeepFamily]             = useState(true);
 
   /* UI */
@@ -176,6 +177,31 @@ export default function AdminDashboard() {
       alert('Failed to update sent status.');
     } finally {
       setTogglingSentId(null);
+    }
+  };
+
+  const handleUpdateSlots = async (inviteId, newSlots) => {
+    const targetSlots = parseInt(newSlots);
+    if (isNaN(targetSlots) || targetSlots < 1) return;
+
+    const currentInvite = invites.find(inv => inv.id === inviteId);
+    if (!currentInvite || currentInvite.maxGuests === targetSlots) return;
+
+    const previousSlots = currentInvite.maxGuests;
+
+    // Optimistic update
+    setInvites(prev => prev.map(inv => inv.id === inviteId ? { ...inv, maxGuests: targetSlots } : inv));
+    setUpdatingSlotId(inviteId);
+
+    try {
+      await axios.patch(`${API_URL}/admin/invites/${inviteId}/slots`, { maxGuests: targetSlots }, { headers });
+    } catch (err) {
+      console.error('Error updating invite slots:', err);
+      // Revert optimistic update
+      setInvites(prev => prev.map(inv => inv.id === inviteId ? { ...inv, maxGuests: previousSlots } : inv));
+      alert('Failed to update invite slots.');
+    } finally {
+      setUpdatingSlotId(null);
     }
   };
 
@@ -606,7 +632,7 @@ export default function AdminDashboard() {
                       <th className="px-6 py-3.5 sticky left-0 z-20 bg-gray-50 border-r border-gray-200/80 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] min-w-[140px]">Family Name</th>
                       <th className="px-6 py-3.5">Category</th>
                       <th className="px-6 py-3.5">Side</th>
-                      <th className="px-6 py-3.5">Max</th>
+                      <th className="px-6 py-3.5">Slots</th>
                       <th className="px-6 py-3.5">Sent Status</th>
                       <th className="px-6 py-3.5">Link Opened</th>
                       <th className="px-6 py-3.5">RSVP</th>
@@ -646,7 +672,48 @@ export default function AdminDashboard() {
                               color: SIDE_COLORS[invite.side || 'Neutral']?.text,
                             }}>{invite.side || 'Neutral'}</span>
                           </td>
-                          <td className="px-6 py-4 text-gray-500">{invite.maxGuests}</td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateSlots(invite.id, invite.maxGuests - 1)}
+                                disabled={invite.maxGuests <= 1 || updatingSlotId === invite.id}
+                                className="w-6 h-6 rounded-md border border-gray-200 bg-white hover:bg-gray-100 active:bg-gray-200 text-gray-700 font-bold flex items-center justify-center text-xs transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-2xs"
+                                title="Reduce slot"
+                              >
+                                -
+                              </button>
+                              <input
+                                type="number"
+                                min="1"
+                                max="99"
+                                value={invite.maxGuests}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value);
+                                  if (!isNaN(val) && val >= 1) {
+                                    handleUpdateSlots(invite.id, val);
+                                  }
+                                }}
+                                disabled={updatingSlotId === invite.id}
+                                className="w-11 text-center font-bold text-gray-800 bg-white border border-gray-200 rounded-md py-0.5 text-xs focus:ring-1 focus:ring-[#722F37] focus:border-[#722F37] transition shadow-2xs"
+                                title="Type slot count or use +/- buttons"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateSlots(invite.id, invite.maxGuests + 1)}
+                                disabled={updatingSlotId === invite.id}
+                                className="w-6 h-6 rounded-md border border-gray-200 bg-white hover:bg-gray-100 active:bg-gray-200 text-gray-700 font-bold flex items-center justify-center text-xs transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-2xs"
+                                title="Add slot"
+                              >
+                                +
+                              </button>
+                              {invite.rsvp && invite.rsvp.attendanceCount > invite.maxGuests && (
+                                <span className="text-[10px] text-amber-600 font-bold ml-0.5" title={`${invite.rsvp.attendanceCount} guests registered but slots reduced to ${invite.maxGuests}`}>
+                                  ⚠️
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-6 py-4">
                             <button
                               type="button"
@@ -769,7 +836,7 @@ export default function AdminDashboard() {
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 uppercase tracking-wider font-bold">
                       <th className="px-5 py-3 sticky left-0 z-20 bg-gray-50 border-r border-gray-200/80 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] min-w-[140px]">Family Name</th>
-                      <th className="px-5 py-3">Max Guests</th>
+                      <th className="px-5 py-3">Slots</th>
                       <th className="px-5 py-3">RSVP</th>
                       <th className="px-5 py-3">Actions</th>
                     </tr>
@@ -778,7 +845,43 @@ export default function AdminDashboard() {
                     {invites.map(invite => (
                       <tr key={invite.id} className="group hover:bg-gray-50/50 transition">
                         <td className="px-5 py-3 font-bold text-gray-800 sticky left-0 z-10 bg-white group-hover:bg-gray-50 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] min-w-[140px]">{invite.familyName}</td>
-                        <td className="px-5 py-3 text-gray-500">{invite.maxGuests}</td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateSlots(invite.id, invite.maxGuests - 1)}
+                              disabled={invite.maxGuests <= 1 || updatingSlotId === invite.id}
+                              className="w-5 h-5 rounded-md border border-gray-200 bg-white hover:bg-gray-100 active:bg-gray-200 text-gray-700 font-bold flex items-center justify-center text-xs transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-2xs"
+                              title="Reduce slot"
+                            >
+                              -
+                            </button>
+                            <input
+                              type="number"
+                              min="1"
+                              max="99"
+                              value={invite.maxGuests}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                if (!isNaN(val) && val >= 1) {
+                                  handleUpdateSlots(invite.id, val);
+                                }
+                              }}
+                              disabled={updatingSlotId === invite.id}
+                              className="w-10 text-center font-bold text-gray-800 bg-white border border-gray-200 rounded-md py-0.5 text-xs focus:ring-1 focus:ring-[#722F37] focus:border-[#722F37] transition shadow-2xs"
+                              title="Type slot count or use +/- buttons"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateSlots(invite.id, invite.maxGuests + 1)}
+                              disabled={updatingSlotId === invite.id}
+                              className="w-5 h-5 rounded-md border border-gray-200 bg-white hover:bg-gray-100 active:bg-gray-200 text-gray-700 font-bold flex items-center justify-center text-xs transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shadow-2xs"
+                              title="Add slot"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </td>
                         <td className="px-5 py-3">
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                             invite.rsvpSubmitted
