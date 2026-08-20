@@ -5,7 +5,7 @@ import {
   Users, CheckSquare, ShieldCheck, LogOut, Plus, 
   Trash2, Check, Download, Image, DollarSign, RefreshCw, Copy,
   ChevronDown, X, Edit2, Table2, GripVertical, Eye, EyeOff,
-  AlertCircle, ArrowRight, LayoutGrid, Send, CheckCircle2
+  AlertCircle, ArrowRight, LayoutGrid, Send, CheckCircle2, Ticket
 } from 'lucide-react';
 
 /* ─────────────────── helpers ─────────────────── */
@@ -50,6 +50,9 @@ export default function AdminDashboard() {
   const [filterStage, setFilterStage]           = useState('All'); // 'All', 'Not Opened', 'Opened', "RSVP'd"
   const [togglingSentId, setTogglingSentId]     = useState(null);
   const [updatingSlotId, setUpdatingSlotId]     = useState(null);
+  const [editingNameId, setEditingNameId]       = useState(null);
+  const [editingNameValue, setEditingNameValue] = useState('');
+  const [deletingInviteId, setDeletingInviteId] = useState(null);
   const [keepFamily, setKeepFamily]             = useState(true);
 
   /* UI */
@@ -202,6 +205,49 @@ export default function AdminDashboard() {
       alert('Failed to update invite slots.');
     } finally {
       setUpdatingSlotId(null);
+    }
+  };
+
+  const handleUpdateName = async (inviteId, newName) => {
+    const trimmed = (newName || '').trim();
+    if (!trimmed) return;
+    const currentInvite = invites.find(inv => inv.id === inviteId);
+    if (!currentInvite || currentInvite.familyName === trimmed) {
+      setEditingNameId(null);
+      return;
+    }
+    const previousName = currentInvite.familyName;
+    // Optimistic update
+    setInvites(prev => prev.map(inv => inv.id === inviteId ? { ...inv, familyName: trimmed } : inv));
+    setEditingNameId(null);
+    try {
+      await axios.patch(`${API_URL}/admin/invites/${inviteId}/name`, { familyName: trimmed }, { headers });
+    } catch (err) {
+      console.error('Error updating invite name:', err);
+      setInvites(prev => prev.map(inv => inv.id === inviteId ? { ...inv, familyName: previousName } : inv));
+      alert('Failed to update invite name.');
+    }
+  };
+
+  const handleDeleteInvite = async (inviteId, familyName) => {
+    if (!window.confirm(`Are you sure you want to delete the invitation for "${familyName}"? This will also remove any submitted RSVP and seating assignments.`)) {
+      return;
+    }
+
+    const previousInvites = [...invites];
+    // Optimistic update
+    setInvites(prev => prev.filter(inv => inv.id !== inviteId));
+    setDeletingInviteId(inviteId);
+
+    try {
+      await axios.delete(`${API_URL}/admin/invites/${inviteId}`, { headers });
+      loadDashboardData();
+    } catch (err) {
+      console.error('Error deleting invite:', err);
+      setInvites(previousInvites);
+      alert('Failed to delete invitation.');
+    } finally {
+      setDeletingInviteId(null);
     }
   };
 
@@ -369,144 +415,189 @@ export default function AdminDashboard() {
       <main className="max-w-7xl mx-auto px-6 py-8">
 
         {/* ══ TAB: OVERVIEW ══ */}
-        {activeTab === 'overview' && (
-          <div className="space-y-8">
+        {activeTab === 'overview' && (() => {
+          const slotsGenerated = stats?.totalSlotsGenerated ?? invites.reduce((sum, inv) => sum + (inv.maxGuests || 0), 0);
+          const slotsTaken     = stats?.totalSlotsTaken ?? stats?.totalExpectedGuests ?? invites.reduce((sum, inv) => sum + (inv.rsvp ? inv.rsvp.attendanceCount : 0), 0);
+          const slotsRemaining = Math.max(0, slotsGenerated - slotsTaken);
+          const slotsPercent   = slotsGenerated > 0 ? Math.round((slotsTaken / slotsGenerated) * 100) : 0;
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: 'Total Invites',    value: stats?.totalInvites,       icon: <Users className="w-6 h-6 text-[#722F37]" />,     sub: null },
-                { label: 'RSVPs Submitted',  value: stats?.totalRSVPs,         icon: <CheckSquare className="w-6 h-6 text-blue-500" />, sub: `${stats?.totalInvites ? Math.round((stats.totalRSVPs/stats.totalInvites)*100):0}% response` },
-                { label: 'Guests Checked In',value: stats?.checkedInAttendees, icon: <ShieldCheck className="w-6 h-6 text-green-500" />,sub: `of ${stats?.totalExpectedGuests} expected` },
-                { label: 'Total Donations',  value: `₦${(stats?.totalDonations||0).toLocaleString()}`, icon: <DollarSign className="w-6 h-6 text-amber-500" />, sub: null },
-              ].map((s, i) => (
-                <div key={i} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">{s.icon}</div>
+          return (
+            <div className="space-y-8">
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                {[
+                  { label: 'Total Invites',     value: stats?.totalInvites || 0, icon: <Users className="w-6 h-6 text-[#722F37]" />, sub: null },
+                  { label: 'Total Guest Slots', value: `${slotsTaken} / ${slotsGenerated}`, icon: <Ticket className="w-6 h-6 text-purple-600" />, sub: `${slotsPercent}% taken (${slotsRemaining} left)` },
+                  { label: 'RSVPs Submitted',   value: stats?.totalRSVPs || 0,   icon: <CheckSquare className="w-6 h-6 text-blue-500" />, sub: `${stats?.totalInvites ? Math.round(((stats?.totalRSVPs||0)/stats.totalInvites)*100):0}% response` },
+                  { label: 'Guests Checked In', value: stats?.checkedInAttendees || 0, icon: <ShieldCheck className="w-6 h-6 text-green-500" />, sub: `of ${stats?.totalExpectedGuests || 0} expected` },
+                  { label: 'Total Donations',   value: `₦${(stats?.totalDonations||0).toLocaleString()}`, icon: <DollarSign className="w-6 h-6 text-amber-500" />, sub: null },
+                ].map((s, i) => (
+                  <div key={i} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">{s.icon}</div>
+                    <div>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">{s.label}</p>
+                      <p className="text-xl font-bold text-gray-900">{s.value}</p>
+                      {s.sub && <p className="text-[10px] text-gray-400">{s.sub}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Guest Slots Breakdown Card */}
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
                   <div>
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">{s.label}</p>
-                    <p className="text-xl font-bold text-gray-900">{s.value}</p>
-                    {s.sub && <p className="text-[10px] text-gray-400">{s.sub}</p>}
+                    <h3 className="font-playfair text-base font-bold text-gray-800 flex items-center gap-2">
+                      <Ticket className="w-5 h-5 text-[#722F37]" /> Guest Slot Occupancy Overview
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Comparing total slots allocated during invite generation against slots claimed by RSVPs.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+                    <span className="px-3 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                      🎟️ {slotsGenerated} Slots Generated
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      ✅ {slotsTaken} Slots Taken
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      ⏳ {slotsRemaining} Slots Remaining
+                    </span>
                   </div>
                 </div>
-              ))}
-            </div>
 
-            {/* Quick actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Create Invite */}
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                <h3 className="font-playfair text-base font-bold text-gray-800 mb-5 flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-[#722F37]" /> Generate Invitation Link
-                </h3>
-                <form onSubmit={handleCreateInvite} className="space-y-4">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-500 block mb-1.5">Family / Group Name</label>
-                    <input
-                      type="text" placeholder="E.g., Adebayo Family" value={familyName}
-                      onChange={e => setFamilyName(e.target.value)} required
-                      className="w-full bg-[#FCFCFD] border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#722F37] transition"
+                {/* Capacity Progress Bar */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-gray-700">
+                    <span>Slot Utilization ({slotsTaken} of {slotsGenerated} taken)</span>
+                    <span className="text-[#722F37] font-mono">{slotsPercent}%</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-3.5 overflow-hidden p-0.5 border border-gray-200/60">
+                    <div
+                      className="bg-gradient-to-r from-[#722F37] to-purple-700 h-full rounded-full transition-all duration-500 shadow-xs"
+                      style={{ width: `${Math.min(100, slotsPercent)}%` }}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-semibold text-gray-500 block mb-1.5">Category</label>
-                      <select value={category} onChange={e => setCategory(e.target.value)}
-                        className="w-full bg-[#FCFCFD] border border-gray-200 rounded-xl px-3 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#722F37] transition">
-                        {['Family','Friend','VIP','Colleague'].map(c => <option key={c}>{c}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-gray-500 block mb-1.5">Max Guests</label>
-                      <input type="number" min="1" max="20" value={maxGuests} onChange={e => setMaxGuests(parseInt(e.target.value))} required
-                        className="w-full bg-[#FCFCFD] border border-gray-200 rounded-xl px-3 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#722F37] transition" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-500 block mb-1.5">Guest Side</label>
-                    <div className="flex gap-2">
-                      {['Bride','Groom','Neutral'].map(s => (
-                        <button key={s} type="button" onClick={() => setInviteSide(s)}
-                          className={`flex-1 py-2 rounded-xl text-xs font-bold border transition ${inviteSide===s ? 'bg-[#722F37] text-white border-[#722F37]' : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-gray-300'}`}>
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                </div>
+              </div>
 
-                  {createMsg && (() => {
-                    // Extract just the URL from the createMsg
-                    const urlMatch = createMsg.match(/(https?:\/\/\S+)/);
-                    const createdUrl = urlMatch ? urlMatch[1] : null;
-                    // Extract family name from the invite we just created (use familyName state before reset)
-                    return (
-                      <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-xl text-xs font-medium whitespace-pre-wrap break-all space-y-2">
-                        <p>{createMsg}</p>
-                        {createdUrl && (
-                          <div className="flex gap-2 flex-wrap pt-1">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                navigator.clipboard.writeText(createdUrl);
-                                setCopiedId('create-link');
-                                setTimeout(() => setCopiedId(null), 2000);
-                              }}
-                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border transition cursor-pointer ${
-                                copiedId === 'create-link'
-                                  ? 'bg-green-200 border-green-400 text-green-900'
-                                  : 'bg-white border-green-300 text-green-700 hover:bg-green-100'
-                              }`}
-                            >
-                              <Copy className="w-3 h-3" />
-                              {copiedId === 'create-link' ? 'Copied!' : 'Copy Link'}
+              {/* Quick actions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Create Invite */}
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                  <h3 className="font-playfair text-base font-bold text-gray-800 mb-5 flex items-center gap-2">
+                    <Plus className="w-5 h-5 text-[#722F37]" /> Generate Invitation Link
+                  </h3>
+                  <form onSubmit={handleCreateInvite} className="space-y-4">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 block mb-1.5">Family / Group Name</label>
+                      <input
+                        type="text" placeholder="E.g., Adebayo Family" value={familyName}
+                        onChange={e => setFamilyName(e.target.value)} required
+                        className="w-full bg-[#FCFCFD] border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#722F37] transition"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500 block mb-1.5">Category</label>
+                        <select value={category} onChange={e => setCategory(e.target.value)}
+                          className="w-full bg-[#FCFCFD] border border-gray-200 rounded-xl px-3 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#722F37] transition">
+                          {['Family','Friend','VIP','Colleague'].map(c => <option key={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500 block mb-1.5">Max Guests</label>
+                        <input type="number" min="1" max="20" value={maxGuests} onChange={e => setMaxGuests(parseInt(e.target.value))} required
+                          className="w-full bg-[#FCFCFD] border border-gray-200 rounded-xl px-3 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#722F37] transition" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 block mb-1.5">Guest Side</label>
+                      <div className="flex gap-2">
+                        {['Bride','Groom','Neutral'].map(s => (
+                          <button key={s} type="button" onClick={() => setInviteSide(s)}
+                            className={`flex-1 py-2 rounded-xl text-xs font-bold border transition ${inviteSide===s ? 'bg-[#722F37] text-white border-[#722F37]' : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-gray-300'}`}>
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {createMsg && (() => {
+                      const urlMatch = createMsg.match(new RegExp('(https?://\\S+)'));
+                      const createdUrl = urlMatch ? urlMatch[1] : null;
+                      return (
+                        <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-xl text-xs font-medium whitespace-pre-wrap break-all space-y-2">
+                          <p>{createMsg}</p>
+                          {createdUrl && (
+                            <div className="flex gap-2 flex-wrap pt-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(createdUrl);
+                                  setCopiedId('create-link');
+                                  setTimeout(() => setCopiedId(null), 2000);
+                                }}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border transition cursor-pointer ${
+                                  copiedId === 'create-link'
+                                    ? 'bg-green-200 border-green-400 text-green-900'
+                                    : 'bg-white border-green-300 text-green-700 hover:bg-green-100'
+                                }`}
+                              >
+                                <Copy className="w-3 h-3" />
+                                {copiedId === 'create-link' ? 'Copied!' : 'Copy Link'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    <button type="submit" className="w-full py-3 bg-[#722F37] hover:bg-[#5A2328] text-white font-bold text-sm rounded-xl transition shadow-sm cursor-pointer">
+                      GENERATE LINK
+                    </button>
+                  </form>
+                </div>
+
+                {/* Gallery approvals */}
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                  <h3 className="font-playfair text-base font-bold text-gray-800 mb-5 flex items-center gap-2">
+                    <Image className="w-5 h-5 text-[#722F37]" /> Gallery Approvals
+                    <span className="ml-auto text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{pendingPhotos.length}</span>
+                  </h3>
+                  {pendingPhotos.length === 0 ? (
+                    <p className="text-sm text-gray-400 italic text-center py-10">No pending photos.</p>
+                  ) : (
+                    <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                      {pendingPhotos.map(photo => (
+                        <div key={photo.id} className="flex items-center p-3 border border-gray-100 rounded-xl bg-gray-50 gap-3">
+                          <img src={photo.imageUrl.startsWith('/uploads') ? `${BACKEND_URL}${photo.imageUrl}` : photo.imageUrl}
+                            alt="" className="w-10 h-10 rounded-lg object-cover shrink-0 border border-gray-200" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-gray-700 truncate">{photo.uploadedBy}</p>
+                            <p className="text-[10px] text-gray-400">{photo.createdAt ? new Date(photo.createdAt).toLocaleDateString() : ''}</p>
+                          </div>
+                          <div className="flex gap-1.5">
+                            <button onClick={() => handleModeratePhoto(photo.id, 'approve')}
+                              className="p-1.5 bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 rounded-lg transition cursor-pointer" title="Approve">
+                              <Check className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => handleModeratePhoto(photo.id, 'reject')}
+                              className="p-1.5 bg-red-50 border border-red-200 text-red-500 hover:bg-red-100 rounded-lg transition cursor-pointer" title="Reject">
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  <button type="submit" className="w-full py-3 bg-[#722F37] hover:bg-[#5A2328] text-white font-bold text-sm rounded-xl transition shadow-sm cursor-pointer">
-                    GENERATE LINK
-                  </button>
-                </form>
-              </div>
-
-              {/* Gallery approvals */}
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                <h3 className="font-playfair text-base font-bold text-gray-800 mb-5 flex items-center gap-2">
-                  <Image className="w-5 h-5 text-[#722F37]" /> Gallery Approvals
-                  <span className="ml-auto text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{pendingPhotos.length}</span>
-                </h3>
-                {pendingPhotos.length === 0 ? (
-                  <p className="text-sm text-gray-400 italic text-center py-10">No pending photos.</p>
-                ) : (
-                  <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-                    {pendingPhotos.map(photo => (
-                      <div key={photo.id} className="flex items-center p-3 border border-gray-100 rounded-xl bg-gray-50 gap-3">
-                        <img src={photo.imageUrl.startsWith('/uploads') ? `${BACKEND_URL}${photo.imageUrl}` : photo.imageUrl}
-                          alt="" className="w-10 h-10 rounded-lg object-cover shrink-0 border border-gray-200" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-gray-700 truncate">{photo.uploadedBy}</p>
-                          <p className="text-[10px] text-gray-400">{photo.createdAt ? new Date(photo.createdAt).toLocaleDateString() : ''}</p>
                         </div>
-                        <div className="flex gap-1.5">
-                          <button onClick={() => handleModeratePhoto(photo.id, 'approve')}
-                            className="p-1.5 bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 rounded-lg transition cursor-pointer" title="Approve">
-                            <Check className="w-3.5 h-3.5" />
-                          </button>
-                          <button onClick={() => handleModeratePhoto(photo.id, 'reject')}
-                            className="p-1.5 bg-red-50 border border-red-200 text-red-500 hover:bg-red-100 rounded-lg transition cursor-pointer" title="Reject">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ══ TAB: INVITES ══ */}
         {activeTab === 'invites' && (() => {
@@ -638,12 +729,13 @@ export default function AdminDashboard() {
                       <th className="px-6 py-3.5">RSVP</th>
                       <th className="px-6 py-3.5">Invite Link</th>
                       <th className="px-6 py-3.5">Checked In</th>
+                      <th className="px-6 py-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {filteredInvites.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="px-6 py-8 text-center text-gray-400 italic">
+                        <td colSpan={10} className="px-6 py-8 text-center text-gray-400 italic">
                           No invitations found matching the selected filters.
                         </td>
                       </tr>
@@ -657,12 +749,37 @@ export default function AdminDashboard() {
                               : 'bg-white hover:bg-amber-50/20'
                           }`}
                         >
-                          <td className={`px-6 py-4 font-bold text-gray-800 sticky left-0 z-10 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] min-w-[140px] transition ${
+                          <td className={`px-3 py-4 font-bold text-gray-800 sticky left-0 z-10 border-r border-gray-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.06)] min-w-[160px] transition ${
                             invite.isSent
                               ? 'bg-[#ecfdf5] group-hover:bg-[#d1fae5]'
                               : 'bg-white group-hover:bg-amber-50/20'
                           }`}>
-                            {invite.familyName}
+                            {editingNameId === invite.id ? (
+                              <input
+                                autoFocus
+                                type="text"
+                                value={editingNameValue}
+                                onChange={e => setEditingNameValue(e.target.value)}
+                                onBlur={() => handleUpdateName(invite.id, editingNameValue)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') { e.target.blur(); }
+                                  if (e.key === 'Escape') { setEditingNameId(null); }
+                                }}
+                                className="w-full px-2 py-1 text-xs font-bold text-gray-800 bg-white border border-[#722F37] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#722F37] shadow-xs"
+                              />
+                            ) : (
+                              <div className="flex items-center gap-1.5 group/name">
+                                <span className="truncate">{invite.familyName}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => { setEditingNameId(invite.id); setEditingNameValue(invite.familyName); }}
+                                  className="opacity-0 group-hover/name:opacity-100 shrink-0 p-1 rounded-md hover:bg-gray-200/70 text-gray-400 hover:text-[#722F37] transition cursor-pointer"
+                                  title="Edit name"
+                                >
+                                  <Edit2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
                           </td>
                           <td className="px-6 py-4 text-gray-500">{invite.category}</td>
                           <td className="px-6 py-4">
@@ -786,6 +903,17 @@ export default function AdminDashboard() {
                               : invite.rsvp?.checkedOut
                               ? <span className="text-red-500 font-bold">Checked Out</span>
                               : <span className="text-gray-300">—</span>}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteInvite(invite.id, invite.familyName)}
+                              disabled={deletingInviteId === invite.id}
+                              className="p-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 transition cursor-pointer disabled:opacity-40"
+                              title="Delete Invitation"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </td>
                         </tr>
                       ))
@@ -911,6 +1039,15 @@ export default function AdminDashboard() {
                               }`}
                             >
                               ✉️ {copiedMsgId === `msg-tab-${invite.id}` ? 'Copied with Message!' : 'Copy with Message'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteInvite(invite.id, invite.familyName)}
+                              disabled={deletingInviteId === invite.id}
+                              className="p-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 transition cursor-pointer disabled:opacity-40 shrink-0"
+                              title="Delete Invitation"
+                            >
+                              <Trash2 className="w-3 h-3" />
                             </button>
                           </div>
                         </td>

@@ -5,6 +5,8 @@ import {
   getInvites, 
   updateInviteSent,
   updateInviteSlots,
+  updateInviteName,
+  deleteInvite,
   getDashboardStats, 
   exportGuests, 
   getPendingPhotos,
@@ -29,8 +31,9 @@ router.patch('/invites/:id/sent', authenticate, authorize(['Admin']), updateInvi
 router.put('/invites/:id/sent', authenticate, authorize(['Admin']), updateInviteSent);
 router.patch('/invites/:id/slots', authenticate, authorize(['Admin']), updateInviteSlots);
 router.put('/invites/:id/slots', authenticate, authorize(['Admin']), updateInviteSlots);
-router.patch('/invites/:id', authenticate, authorize(['Admin']), updateInviteSlots);
-router.put('/invites/:id', authenticate, authorize(['Admin']), updateInviteSlots);
+router.patch('/invites/:id/name', authenticate, authorize(['Admin']), updateInviteName);
+router.put('/invites/:id/name', authenticate, authorize(['Admin']), updateInviteName);
+router.delete('/invites/:id', authenticate, authorize(['Admin']), deleteInvite);
 router.get('/stats', authenticate, authorize(['Admin']), getDashboardStats);
 router.get('/export', authenticate, authorize(['Admin']), exportGuests);
 

@@ -175,6 +175,59 @@ export async function updateInviteSlots(req, res) {
   }
 }
 
+export async function updateInviteName(req, res) {
+  const { id } = req.params;
+  const { familyName } = req.body;
+
+  try {
+    const inviteId = parseInt(id);
+    if (isNaN(inviteId)) {
+      return res.status(400).json({ error: 'Invalid invite ID' });
+    }
+
+    const trimmedName = (familyName || '').trim();
+    if (!trimmedName) {
+      return res.status(400).json({ error: 'Family name cannot be empty.' });
+    }
+
+    const updatedInvite = await prisma.invite.update({
+      where: { id: inviteId },
+      data: { familyName: trimmedName },
+      include: { rsvp: true }
+    });
+
+    res.json({ message: 'Invite name updated successfully', invite: updatedInvite });
+  } catch (error) {
+    console.error('Error updating invite name:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function deleteInvite(req, res) {
+  const { id } = req.params;
+
+  try {
+    const inviteId = parseInt(id);
+    if (isNaN(inviteId)) {
+      return res.status(400).json({ error: 'Invalid invite ID' });
+    }
+
+    const existing = await prisma.invite.findUnique({ where: { id: inviteId } });
+    if (!existing) {
+      return res.status(404).json({ error: 'Invitation not found' });
+    }
+
+    await prisma.invite.delete({
+      where: { id: inviteId }
+    });
+
+    res.json({ message: 'Invitation deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting invite:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 export async function getDashboardStats(req, res) {
   try {
     const totalInvitesCount = await prisma.invite.count();
@@ -188,13 +241,22 @@ export async function getDashboardStats(req, res) {
       where: { checkedIn: true }
     });
 
-    // Total expected attendees from RSVPs
+    // Total expected attendees from RSVPs (slots taken)
     const rsvpSummaries = await prisma.rSVP.aggregate({
       _sum: {
         attendanceCount: true
       }
     });
     const totalExpectedGuests = rsvpSummaries._sum.attendanceCount || 0;
+    const totalSlotsTaken = totalExpectedGuests;
+
+    // Total slots generated (sum of maxGuests across all Invites)
+    const inviteSlotsSummary = await prisma.invite.aggregate({
+      _sum: {
+        maxGuests: true
+      }
+    });
+    const totalSlotsGenerated = inviteSlotsSummary._sum.maxGuests || 0;
 
     // Total donations
     const donationSummaries = await prisma.donation.aggregate({
@@ -214,6 +276,8 @@ export async function getDashboardStats(req, res) {
       checkedInFamilies,
       checkedInAttendees,
       totalExpectedGuests,
+      totalSlotsGenerated,
+      totalSlotsTaken,
       totalDonations,
       pendingPhotosCount
     });
