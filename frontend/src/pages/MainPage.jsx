@@ -939,11 +939,15 @@ export default function MainPage() {
               <div className="flex items-center gap-3 bg-wedding-wine/45 border border-wedding-wine/20 p-4 rounded-xl">
                 <Info className="w-6 h-6 text-wedding-gold shrink-0" />
                 <p className="text-xs text-wedding-lightBeige leading-relaxed">
-                  Hi <strong className="text-white">{invite?.familyName || 'Guest'}</strong>, you are allocated a maximum of <strong className="text-white">{invite?.maxGuests || 2} guests</strong> (including yourself). Please specify the number of attendees below.
-
-                 
+                  Hi <strong className="text-white">{invite?.familyName || 'Guest'}</strong>, you are allocated{' '}
+                  {(!invite?.maxGuests || invite.maxGuests === 1) ? (
+                    <strong className="text-white">1 slot (you)</strong>
+                  ) : (
+                    <strong className="text-white">
+                      {invite.maxGuests} slots total (you and {invite.maxGuests - 1} {invite.maxGuests - 1 === 1 ? 'person' : 'people'})
+                    </strong>
+                  )}. Please specify the number of attendees below.
                 </p>
-                
               </div>
               <p className="text-xs text-wedding-lightBeige leading-relaxed">
                 Each Attendee will be given a unique pass to access the event venue.
@@ -953,14 +957,14 @@ export default function MainPage() {
               <div className="bg-wedding-gold/10 border border-wedding-gold/30 p-4 rounded-xl">
                 {invite?.maxGuests > 1 ? (
                   <p className="text-sm font-bold text-wedding-gold text-center leading-relaxed">
-                    👥 Please select the number of guests attending and fill in each person's details below.
+                    👥 You have been allocated <span className="text-white">{invite.maxGuests} slots</span> (you and {invite.maxGuests - 1} {invite.maxGuests - 1 === 1 ? 'person' : 'people'}).
                     <span className="block text-xs font-normal text-wedding-lightBeige/90 mt-1">
-                      Remember to include yourself in the count.
+                      Please select how many are attending and enter each person's details below.
                     </span>
                   </p>
                 ) : (
                   <p className="text-sm font-bold text-wedding-gold text-center leading-relaxed">
-                    🎟️ You have been allocated <span className="text-white">1 slot</span> — please select 1 guest (yourself).
+                    🎟️ You have been allocated <span className="text-white">1 slot (you)</span>. Please enter your details below.
                   </p>
                 )}
               </div>
@@ -1237,7 +1241,7 @@ export default function MainPage() {
                         </h4>
                       </div>
                       <p className="text-xs text-wedding-lightBeige/80 leading-relaxed">
-                        Your invitation allows up to <strong className="text-wedding-gold">{maxSlots} guests</strong>. You have currently registered <strong className="text-wedding-gold">{registeredCount} guest{registeredCount > 1 ? 's' : ''}</strong>. You can register the remaining {remainingSlots} guest(s) below whenever they are ready.
+                        Your invitation allows <strong className="text-wedding-gold">{maxSlots === 1 ? '1 slot (you)' : `${maxSlots} slots total (you and ${maxSlots - 1} ${maxSlots - 1 === 1 ? 'person' : 'people'})`}</strong>. You have currently registered <strong className="text-wedding-gold">{registeredCount} {registeredCount === 1 ? 'person' : 'people'}</strong>. You can register the remaining {remainingSlots} {remainingSlots === 1 ? 'person' : 'people'} below whenever ready.
                       </p>
 
                       {showAddGuestForm ? (
