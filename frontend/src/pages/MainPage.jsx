@@ -969,50 +969,75 @@ export default function MainPage() {
                 )}
               </div>
 
-              {/* Number of Attendees selector */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-wedding-lightBeige">How many guests are attending?</label>
-                <select 
-                  onChange={(e) => handleGuestCountChange(parseInt(e.target.value))}
-                  className="w-full bg-white border border-wedding-gold/30 rounded-xl px-4 py-3 text-wedding-wineDark font-medium focus:outline-none focus:border-wedding-gold"
-                >
-                  {Array.from({ length: invite?.maxGuests || 2 }, (_, i) => i + 1).map((num) => (
-                    <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
-                  ))}
-                </select>
-              </div>
+              {/* Number of Attendees selector (only shown if more than 1 slot) */}
+              {invite?.maxGuests > 1 && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-wedding-lightBeige">How many guests are attending?</label>
+                  <select 
+                    onChange={(e) => handleGuestCountChange(parseInt(e.target.value))}
+                    className="w-full bg-white border border-wedding-gold/30 rounded-xl px-4 py-3 text-wedding-wineDark font-medium focus:outline-none focus:border-wedding-gold"
+                  >
+                    {Array.from({ length: invite?.maxGuests || 2 }, (_, i) => i + 1).map((num) => (
+                      <option key={num} value={num}>
+                        {num === 1 
+                          ? '1 Person (Just You)' 
+                          : `${num} People (You + ${num - 1} ${num - 1 === 1 ? 'Guest' : 'Guests'})`
+                        }
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Attendee Name inputs */}
               <div className="space-y-4 pt-2">
                 <p className="text-xs font-bold uppercase tracking-wider text-wedding-gold">Attendee Details</p>
-                {fields.map((field, index) => (
-                  <div key={field.id} className="space-y-3 p-4 bg-[#240A0C]/50 border border-wedding-gold/15 rounded-xl">
-                    <p className="text-xs font-bold text-wedding-gold/80">Guest #{index + 1}</p>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <input
-                          type="text"
-                          placeholder="Full Name (Required)"
-                          {...register(`attendees.${index}.fullName`, { required: 'Name is required' })}
-                          className="w-full bg-white border border-wedding-gold/20 rounded-lg px-3 py-2 text-sm text-wedding-wineDark font-medium focus:outline-none focus:border-wedding-gold"
-                        />
-                        {errors?.attendees?.[index]?.fullName && (
-                          <span className="text-[10px] text-red-400 mt-1 block">{errors.attendees[index].fullName.message}</span>
-                        )}
-                      </div>
+                {fields.map((field, index) => {
+                  const isMainGuest = index === 0;
+                  const isOnlyOneExtraGuest = fields.length === 2;
+                  
+                  let headerTitle = '👤 Your Details';
+                  let namePlaceholder = 'Your Full Name (Required)';
+                  
+                  if (!isMainGuest) {
+                    if (isOnlyOneExtraGuest) {
+                      headerTitle = '👥 Guest Details';
+                      namePlaceholder = "Guest's Full Name (Required)";
+                    } else {
+                      headerTitle = `👥 Guest #${index} Details`;
+                      namePlaceholder = `Guest #${index} Full Name (Required)`;
+                    }
+                  }
 
-                      <div>
-                        <input
-                          type="text"
-                          placeholder="Phone Number (Optional)"
-                          {...register(`attendees.${index}.phoneNumber`)}
-                          className="w-full bg-white border border-wedding-gold/20 rounded-lg px-3 py-2 text-sm text-wedding-wineDark font-medium focus:outline-none focus:border-wedding-gold"
-                        />
+                  return (
+                    <div key={field.id} className="space-y-3 p-4 bg-[#240A0C]/50 border border-wedding-gold/15 rounded-xl">
+                      <p className="text-xs font-bold text-wedding-gold/90">{headerTitle}</p>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <input
+                            type="text"
+                            placeholder={namePlaceholder}
+                            {...register(`attendees.${index}.fullName`, { required: 'Name is required' })}
+                            className="w-full bg-white border border-wedding-gold/20 rounded-lg px-3 py-2 text-sm text-wedding-wineDark font-medium focus:outline-none focus:border-wedding-gold"
+                          />
+                          {errors?.attendees?.[index]?.fullName && (
+                            <span className="text-[10px] text-red-400 mt-1 block">{errors.attendees[index].fullName.message}</span>
+                          )}
+                        </div>
+
+                        <div>
+                          <input
+                            type="text"
+                            placeholder="Phone Number (Optional)"
+                            {...register(`attendees.${index}.phoneNumber`)}
+                            className="w-full bg-white border border-wedding-gold/20 rounded-lg px-3 py-2 text-sm text-wedding-wineDark font-medium focus:outline-none focus:border-wedding-gold"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Optional Children attending question */}
