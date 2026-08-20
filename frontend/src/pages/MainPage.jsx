@@ -941,12 +941,16 @@ export default function MainPage() {
                 <p className="text-xs text-wedding-lightBeige leading-relaxed">
                   Hi <strong className="text-white">{invite?.familyName || 'Guest'}</strong>, you are allocated{' '}
                   {(!invite?.maxGuests || invite.maxGuests === 1) ? (
-                    <strong className="text-white">1 slot (you)</strong>
+                    <>
+                      <strong className="text-white">1 slot (you)</strong>. Please enter your details below.
+                    </>
                   ) : (
-                    <strong className="text-white">
-                      {invite.maxGuests} slots total (you and {invite.maxGuests - 1} {invite.maxGuests - 1 === 1 ? 'person' : 'people'})
-                    </strong>
-                  )}. Please specify the number of attendees below.
+                    <>
+                      <strong className="text-white">
+                        {invite.maxGuests} slots total (you and {invite.maxGuests - 1} {invite.maxGuests - 1 === 1 ? 'person' : 'people'})
+                      </strong>. Please specify the number of attendees below.
+                    </>
+                  )}
                 </p>
               </div>
               <p className="text-xs text-wedding-lightBeige leading-relaxed">
