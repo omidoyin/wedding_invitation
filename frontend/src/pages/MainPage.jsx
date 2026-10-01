@@ -774,7 +774,7 @@ export default function MainPage() {
           <div className="relative pl-8">
             <span className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-wedding-wine border border-wedding-gold"></span>
             <div className="absolute -left-28 top-0 hidden md:block w-24 text-right pr-4">
-              <span className="font-playfair text-wedding-wineDark text-xl font-extrabold">2020</span>
+              <span className="font-playfair text-wedding-wineDark text-xl font-extrabold">2016</span>
             </div>
             <h3 className="font-playfair text-xl text-wedding-wineDark font-bold">The First Encounter</h3>
             <p className="text-sm text-wedding-wineDark/95 mt-1 leading-relaxed">
@@ -790,7 +790,7 @@ export default function MainPage() {
             </div>
             <h3 className="font-playfair text-xl text-wedding-wineDark font-bold">More Than Friends</h3>
             <p className="text-sm text-wedding-wineDark/95 mt-1 leading-relaxed">
-              After two years of supporting each other's dreams, sharing goals, and walking side by side as best friends, we realized that our hearts were irrevocably bound together.  9 years of Friendship matured into a beautiful romance.
+              After six years of supporting each other's dreams, sharing goals, and walking side by side as best friends, we realized that our hearts were irrevocably bound together.  6 years of Friendship matured into a beautiful romance.
             </p>
           </div>
 
@@ -798,7 +798,7 @@ export default function MainPage() {
           <div className="relative pl-8">
             <span className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-wedding-wine border border-wedding-gold"></span>
             <div className="absolute -left-28 top-0 hidden md:block w-24 text-right pr-4">
-              <span className="font-playfair text-wedding-wineDark text-xl font-extrabold">2024</span>
+              <span className="font-playfair text-wedding-wineDark text-xl font-extrabold">2025</span>
             </div>
             <h3 className="font-playfair text-xl text-wedding-wineDark font-bold">The Promise</h3>
             <p className="text-sm text-wedding-wineDark/95 mt-1 leading-relaxed">
