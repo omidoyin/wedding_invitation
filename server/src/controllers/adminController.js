@@ -106,7 +106,17 @@ export async function getInvites(req, res) {
   try {
     await ensureIsSentColumn();
     const invites = await prisma.invite.findMany({
-      include: { rsvp: true },
+      include: {
+        rsvp: {
+          include: {
+            attendees: {
+              include: {
+                table: true
+              }
+            }
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' }
     });
     res.json(invites);
@@ -136,7 +146,17 @@ export async function updateInviteSent(req, res) {
     const updatedInvite = await prisma.invite.update({
       where: { id: inviteId },
       data: { isSent: targetSent },
-      include: { rsvp: true }
+      include: {
+        rsvp: {
+          include: {
+            attendees: {
+              include: {
+                table: true
+              }
+            }
+          }
+        }
+      }
     });
 
     res.json({ message: 'Invite sent status updated', invite: updatedInvite });
@@ -165,7 +185,17 @@ export async function updateInviteSlots(req, res) {
     const updatedInvite = await prisma.invite.update({
       where: { id: inviteId },
       data: { maxGuests: targetSlots },
-      include: { rsvp: true }
+      include: {
+        rsvp: {
+          include: {
+            attendees: {
+              include: {
+                table: true
+              }
+            }
+          }
+        }
+      }
     });
 
     res.json({ message: 'Invite slots updated successfully', invite: updatedInvite });
@@ -193,7 +223,17 @@ export async function updateInviteName(req, res) {
     const updatedInvite = await prisma.invite.update({
       where: { id: inviteId },
       data: { familyName: trimmedName },
-      include: { rsvp: true }
+      include: {
+        rsvp: {
+          include: {
+            attendees: {
+              include: {
+                table: true
+              }
+            }
+          }
+        }
+      }
     });
 
     res.json({ message: 'Invite name updated successfully', invite: updatedInvite });

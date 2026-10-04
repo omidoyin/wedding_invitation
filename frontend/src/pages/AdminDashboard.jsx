@@ -59,6 +59,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [copiedId, setCopiedId]   = useState(null);
   const [copiedMsgId, setCopiedMsgId] = useState(null);
+  const [selectedInviteForGuests, setSelectedInviteForGuests] = useState(null);
 
   /* Invitation message template */
   const DEFAULT_MSG_TEMPLATE = `Hi {name}, you're warmly invited to the wedding of Ayodeji & Adesewa (AALOVESTORY2026)!\n\nPlease click the link below to confirm your attendance and get your entry pass:\n{link}\n\nWe can't wait to celebrate with you! 🎉`;
@@ -870,11 +871,25 @@ export default function AdminDashboard() {
                             )}
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                              invite.rsvpSubmitted
-                                ? 'bg-green-50 text-green-700 border-green-200'
-                                : 'bg-amber-50 text-amber-700 border-amber-200'
-                            }`}>{invite.rsvpSubmitted ? "RSVP'd" : 'Pending'}</span>
+                            {invite.rsvpSubmitted ? (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedInviteForGuests(invite)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 hover:border-green-300 transition cursor-pointer shadow-xs"
+                                title="Click to view registered guest names"
+                              >
+                                <Users className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                                <span>
+                                  {invite.rsvp?.attendees?.length || invite.rsvp?.attendanceCount || 1}{' '}
+                                  {(invite.rsvp?.attendees?.length || invite.rsvp?.attendanceCount || 1) === 1 ? 'Guest' : 'Guests'} RSVP'd
+                                </span>
+                                <Eye className="w-3 h-3 text-green-600 opacity-70 shrink-0 ml-0.5" />
+                              </button>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                                <span>Pending</span>
+                              </span>
+                            )}
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
@@ -1011,11 +1026,24 @@ export default function AdminDashboard() {
                           </div>
                         </td>
                         <td className="px-5 py-3">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                            invite.rsvpSubmitted
-                              ? 'bg-green-50 text-green-700 border-green-200'
-                              : 'bg-amber-50 text-amber-700 border-amber-200'
-                          }`}>{invite.rsvpSubmitted ? "RSVP'd" : 'Pending'}</span>
+                          {invite.rsvpSubmitted ? (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedInviteForGuests(invite)}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 hover:border-green-300 transition cursor-pointer"
+                              title="Click to view registered guest names"
+                            >
+                              <Users className="w-3 h-3 text-green-600 shrink-0" />
+                              <span>
+                                {invite.rsvp?.attendees?.length || invite.rsvp?.attendanceCount || 1}{' '}
+                                {(invite.rsvp?.attendees?.length || invite.rsvp?.attendanceCount || 1) === 1 ? 'Guest' : 'Guests'}
+                              </span>
+                            </button>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                              <span>Pending</span>
+                            </span>
+                          )}
                         </td>
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-2">
@@ -1438,6 +1466,137 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ══ GUEST NAMES MODAL ══ */}
+      {selectedInviteForGuests && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-2xl p-6 w-full max-w-lg max-h-[85vh] flex flex-col animate-slide-up">
+            <div className="flex items-start justify-between border-b border-gray-100 pb-4 mb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-playfair text-lg font-bold text-gray-900">
+                    {selectedInviteForGuests.familyName}
+                  </h3>
+                  <span
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
+                    style={{
+                      background: SIDE_COLORS[selectedInviteForGuests.side || 'Neutral']?.bg,
+                      borderColor: SIDE_COLORS[selectedInviteForGuests.side || 'Neutral']?.border,
+                      color: SIDE_COLORS[selectedInviteForGuests.side || 'Neutral']?.text,
+                    }}
+                  >
+                    {selectedInviteForGuests.side || 'Neutral'}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Category: <strong className="text-gray-700">{selectedInviteForGuests.category}</strong> · 
+                  Max Allowed: <strong className="text-gray-700">{selectedInviteForGuests.maxGuests} slots</strong>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedInviteForGuests(null)}
+                className="p-1.5 text-gray-400 hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+              {selectedInviteForGuests.rsvp?.anyChildren && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold p-3 rounded-xl flex items-center gap-2">
+                  <span>👶</span>
+                  <span>
+                    Includes {selectedInviteForGuests.rsvp.childrenCount || 0} child(ren) attending.
+                  </span>
+                </div>
+              )}
+
+              {selectedInviteForGuests.rsvp?.attendees && selectedInviteForGuests.rsvp.attendees.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Registered Guests ({selectedInviteForGuests.rsvp.attendees.length})
+                    </p>
+                    {selectedInviteForGuests.rsvp.serialNumber && (
+                      <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
+                        Group Code: {selectedInviteForGuests.rsvp.serialNumber}
+                      </span>
+                    )}
+                  </div>
+                  {selectedInviteForGuests.rsvp.attendees.map((att, idx) => (
+                    <div
+                      key={att.id || idx}
+                      className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-sm text-gray-900">{att.fullName}</span>
+                          {att.registeredBy && (
+                            <span className="text-[9px] font-semibold bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded">
+                              Added by {att.registeredBy}
+                            </span>
+                          )}
+                        </div>
+                        {att.phoneNumber && (
+                          <p className="text-xs text-gray-600 flex items-center gap-1">
+                            <span>📞</span> {att.phoneNumber}
+                          </p>
+                        )}
+                        <p className="text-[11px] font-mono text-gray-500">
+                          Pass Code: <span className="font-bold text-gray-800">{att.serialNumber}</span>
+                        </p>
+                        {att.table && (
+                          <p className="text-xs text-purple-700 font-semibold flex items-center gap-1 mt-0.5">
+                            <span>🪑</span> Table: <strong>{att.table.name}</strong> {att.seatNumber ? `(Seat ${att.seatNumber})` : ''}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="sm:text-right shrink-0">
+                        {att.checkedIn ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-green-100 text-green-800 border border-green-300">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                            <span>Checked In</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-500 border border-gray-200">
+                            <span>Not Checked In</span>
+                          </span>
+                        )}
+                        {att.checkedInAt && (
+                          <p className="text-[10px] text-gray-400 mt-1">
+                            {new Date(att.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-8 text-center bg-gray-50 border border-dashed border-gray-200 rounded-xl">
+                  <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-xs text-gray-500 font-medium">
+                    {selectedInviteForGuests.rsvpSubmitted
+                      ? "No individual guest details found."
+                      : "No RSVP submitted yet for this family/friend group."}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-gray-100 pt-3 mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedInviteForGuests(null)}
+                className="px-5 py-2 bg-[#722F37] hover:bg-[#5A2328] text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-sm"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
